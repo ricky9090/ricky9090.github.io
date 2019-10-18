@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="ViewHolder是ListView，GridView中常用的优化方案。以往看到很多文章，将缓存View与ViewHodler的使用放在一起来讲，但实际使用ViewHolder是有明确的目的和作用的。">
+<meta name="keywords" content="android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ListView中的ViewHolder模式及其作用">
+<meta property="og:url" content="https://ucx9002.github.io/2016/04/18/listview_viewholder/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="ViewHolder是ListView，GridView中常用的优化方案。以往看到很多文章，将缓存View与ViewHodler的使用放在一起来讲，但实际使用ViewHolder是有明确的目的和作用的。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-06-11T08:46:44.042Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ListView中的ViewHolder模式及其作用">
+<meta name="twitter:description" content="ViewHolder是ListView，GridView中常用的优化方案。以往看到很多文章，将缓存View与ViewHodler的使用放在一起来讲，但实际使用ViewHolder是有明确的目的和作用的。">
+  <link rel="canonical" href="https://ucx9002.github.io/2016/04/18/listview_viewholder/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>ListView中的ViewHolder模式及其作用 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2016/04/18/listview_viewholder/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">ListView中的ViewHolder模式及其作用
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2016-04-18 16:57:48" itemprop="dateCreated datePublished" datetime="2016-04-18T16:57:48+08:00">2016-04-18</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-06-11 16:46:44" itemprop="dateModified" datetime="2018-06-11T16:46:44+08:00">2018-06-11</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>ViewHolder是ListView，GridView中常用的优化方案。以往看到很多文章，将缓存View与ViewHodler的使用放在一起来讲，但实际使用ViewHolder是有明确的目的和作用的。</p>
+<a id="more"></a>
+<p>先来看一下最基本，但也是不正确的ListView使用方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> View <span class="title">getView</span><span class="params">(<span class="keyword">int</span> position, View convertView, ViewGroup parent)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);</span><br><span class="line">	View mView = inflater.inflate(R.layout.list_item, parent, <span class="keyword">false</span>);</span><br><span class="line">			</span><br><span class="line">	TextView textView = (TextView) mView.findViewById(R.id.item_text);</span><br><span class="line">	ImageView imageView = (ImageView) mView.findViewById(R.id.item_image);</span><br><span class="line">	</span><br><span class="line">	textView.setText(R.string.app_name);</span><br><span class="line">	imageView.setImageResource(R.drawable.ic_launcher);</span><br><span class="line">			</span><br><span class="line">	<span class="keyword">return</span> mView;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这时IDE也会提示我们这样的代码是不正确的：</p>
+<blockquote>
+<p>Unconditional layout inflation from view adapter: Should use View Holder pattern (use recycled view passed into this method as the second parameter) for smoother scrolling</p>
+</blockquote>
+<p>实际这个改进的建议包含两方面<br>1.我们应当通过缓存机制，减少无条件的载入xml，降低内存使用<br>2.使用ViewHolder模式</p>
+<p>先来看一下不用ViewHolder，且引入缓存机制的方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> View <span class="title">getView</span><span class="params">(<span class="keyword">int</span> position, View convertView, ViewGroup parent)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (convertView == <span class="keyword">null</span>) &#123;</span><br><span class="line">		LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);</span><br><span class="line">		convertView = inflater.inflate(R.layout.list_item, parent, <span class="keyword">false</span>);</span><br><span class="line">	&#125;</span><br><span class="line">			</span><br><span class="line">	TextView textView = (TextView) convertView.findViewById(R.id.item_text);</span><br><span class="line">	ImageView imageView = (ImageView) convertView.findViewById(R.id.item_image);</span><br><span class="line">		</span><br><span class="line">	textView.setText(R.string.app_name);</span><br><span class="line">	imageView.setImageResource(R.drawable.ic_launcher);</span><br><span class="line">			</span><br><span class="line">	<span class="keyword">return</span> convertView;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在这里我们通过判断getView中的convertView参数，来决定是否载入xml生成view。当系统传递来null值时，则代表没有缓存的view可供使用，我们需要通过xml布局来生成新的view；若系统传递进来已有view对象，那么我们就不需要重新生成了，直接复用即可。<br>但在这样的代码逻辑下，也存在一个影响效率的因素：<br>无论是否使用了缓存的View，我们都需要重新通过findViewById来查找布局中的某一子元素，以便进一步操作，这还是比较印象效率的。因此我们引入了ViewHolder模式，来减少findViewById方法的调用，提高子View获取的效率：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> View <span class="title">getView</span><span class="params">(<span class="keyword">int</span> position, View convertView, ViewGroup parent)</span> </span>&#123;</span><br><span class="line">	ViewHolder holder;</span><br><span class="line">	<span class="keyword">if</span> (convertView == <span class="keyword">null</span>) &#123;</span><br><span class="line">		LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);</span><br><span class="line">		convertView = inflater.inflate(R.layout.list_item, parent, <span class="keyword">false</span>);</span><br><span class="line">		holder = <span class="keyword">new</span> ViewHolder();</span><br><span class="line">		holder.textView = (TextView) convertView.findViewById(R.id.item_text);</span><br><span class="line">		holder.imageView = (ImageView) convertView.findViewById(R.id.item_image);</span><br><span class="line">				</span><br><span class="line">		convertView.setTag(holder);</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		holder = (ViewHolder) convertView.getTag();</span><br><span class="line">	&#125;</span><br><span class="line">			</span><br><span class="line">	holder.textView.setText(R.string.app_name);</span><br><span class="line">	holder.imageView.setImageResource(R.drawable.ic_launcher);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> convertView;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>看起来代码变多了，但实际上是有好处的：<br>View的setTag方法可以允许我们传入一个Object对象，来存储相应信息。因此我们生命了ViewHolder类，其中保存了TextView与ImageView的引用，我们将其设置到View的Tag中后，若系统传入非空的convertView时，我们便可以通过getTag直接过去到两个子VIiw的引用，而免去了调用findViewById。通过这样优化以后，我们发现<strong>只有在convertView为null值时需要调用findVIewById，这大大节省了getView内部的处理速度</strong>。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/android/" rel="tag"># android</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2016/04/06/android_layoutinflater/" rel="next" title="LayoutInflater两个inflate方法的区别">
+                  <i class="fa fa-chevron-left"></i> LayoutInflater两个inflate方法的区别
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2016/04/20/android_view_xml/" rel="prev" title="Android自定义View读取XML属性详解">
+                  Android自定义View读取XML属性详解 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

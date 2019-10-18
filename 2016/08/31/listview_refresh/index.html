@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="在列表中显示多个下载进度条是一个很常见的需求了，这个需求主要涉及到以下两个技术点：1.Handler异步更新UI2.ListView进行局部更新 今天来看一下这一功能最简单的实现——模仿多个APP下载更新进度条。为了让代码简单一些，在这里使用了ListView显示列表，直接使用线程控制进度更新。">
+<meta name="keywords" content="android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ListView中的局部刷新">
+<meta property="og:url" content="https://ucx9002.github.io/2016/08/31/listview_refresh/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="在列表中显示多个下载进度条是一个很常见的需求了，这个需求主要涉及到以下两个技术点：1.Handler异步更新UI2.ListView进行局部更新 今天来看一下这一功能最简单的实现——模仿多个APP下载更新进度条。为了让代码简单一些，在这里使用了ListView显示列表，直接使用线程控制进度更新。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-06-11T08:46:44.041Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ListView中的局部刷新">
+<meta name="twitter:description" content="在列表中显示多个下载进度条是一个很常见的需求了，这个需求主要涉及到以下两个技术点：1.Handler异步更新UI2.ListView进行局部更新 今天来看一下这一功能最简单的实现——模仿多个APP下载更新进度条。为了让代码简单一些，在这里使用了ListView显示列表，直接使用线程控制进度更新。">
+  <link rel="canonical" href="https://ucx9002.github.io/2016/08/31/listview_refresh/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>ListView中的局部刷新 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2016/08/31/listview_refresh/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">ListView中的局部刷新
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2016-08-31 19:33:42" itemprop="dateCreated datePublished" datetime="2016-08-31T19:33:42+08:00">2016-08-31</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-06-11 16:46:44" itemprop="dateModified" datetime="2018-06-11T16:46:44+08:00">2018-06-11</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在列表中显示多个下载进度条是一个很常见的需求了，<br>这个需求主要涉及到以下两个技术点：<br>1.Handler异步更新UI<br>2.ListView进行局部更新</p>
+<p>今天来看一下这一功能最简单的实现——模仿多个APP下载更新进度条。<br>为了让代码简单一些，在这里使用了ListView显示列表，直接使用线程控制进度更新。</p>
+<a id="more"></a>
+<p>首先，来创建一个AppItem的类在ListView中显示项目：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AppItem</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String appName;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> currentProgress;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> appIndex;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">AppItem</span><span class="params">(String name, <span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">        appName = name;</span><br><span class="line">        currentProgress = <span class="number">0</span>;</span><br><span class="line">        appIndex = index;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getAppName</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> appName;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setCurrentProgress</span><span class="params">(<span class="keyword">int</span> progress)</span> </span>&#123;</span><br><span class="line">        currentProgress = progress;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getCurrentProgress</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> currentProgress;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getAppIndex</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> appIndex;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>为简单说明，列表项设定的很简单，仅有应用名称，下载进度和项目在列表中的index这三个元素。<br>下载进度默认为0，在创建项目时必须提供应用名称和index数值。</p>
+<p>然后来编写ListView的Adapter.<br>在这里，考虑到应用下载时进度条时刻变化，并且各项之间没有同步关系，因此需要提供一个方法来允许我们更新ListView中的某一项，而不是每次调用notifyDataSetChanged更新整个list，那样会非常耗费资源。<br>同时，还需要创建一个ViewHolder并使用缓存机制节省内存。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AppListAdapter</span> <span class="keyword">extends</span> <span class="title">BaseAdapter</span> </span>&#123;</span><br><span class="line">        <span class="comment">//为描述简便，将Adapter直接定义在MainActivity，并且直接读取Activity中的mData(ArrayList)</span></span><br><span class="line"></span><br><span class="line">        LayoutInflater mInflater;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">AppListAdapter</span><span class="params">(Context context)</span> </span>&#123;</span><br><span class="line">            mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getCount</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> mData.size();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> Object <span class="title">getItem</span><span class="params">(<span class="keyword">int</span> position)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> mData.get(position);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">getItemId</span><span class="params">(<span class="keyword">int</span> position)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> position;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> View <span class="title">getView</span><span class="params">(<span class="keyword">int</span> position, View convertView, ViewGroup parent)</span> </span>&#123;</span><br><span class="line">            <span class="comment">// 使用ViewHolder和复用机制节省内存</span></span><br><span class="line">            ViewHolder holder;</span><br><span class="line">            <span class="keyword">if</span>(convertView == <span class="keyword">null</span>) &#123;</span><br><span class="line">                holder = <span class="keyword">new</span> ViewHolder();</span><br><span class="line">                convertView = mInflater.inflate(R.layout.layout_item, parent, <span class="keyword">false</span>);</span><br><span class="line">                holder.appNameText = (TextView) convertView.findViewById(R.id.app_name_text);</span><br><span class="line">                holder.downloadProgress = (ProgressBar) convertView.findViewById(R.id.app_progress);</span><br><span class="line"></span><br><span class="line">                convertView.setTag(holder);</span><br><span class="line"></span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                holder = (ViewHolder) convertView.getTag();</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            holder.appNameText.setText(mData.get(position).getAppName());</span><br><span class="line">            holder.downloadProgress.setProgress(mData.get(position).getCurrentProgress());</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> convertView;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 通过提供单个View何其所在位置，更新ListView中的某一项</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">updateView</span><span class="params">(View view, <span class="keyword">int</span> position)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (view == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            Log.i(TAG, <span class="string">"view index is : "</span> + mListView.getPositionForView(view));</span><br><span class="line">            ViewHolder holder = (ViewHolder)view.getTag();</span><br><span class="line">            holder.downloadProgress.setProgress(mData.get(position).getCurrentProgress());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">ViewHolder</span> </span>&#123;</span><br><span class="line">        TextView appNameText;</span><br><span class="line">        ProgressBar downloadProgress;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>在这里通过updateView来实现单个Item的更新，为何需要传入View对象和其对应的位置，后面来说明。</p>
+<p>接下来，为了模拟应用下载，我们新建一个线程类，定时更新AppItem中的progress数值。这样刷新Item时，直接读取并更新View上对应AppItem中的progressbar数值，就可以达到这一效果了。<br>同时，由于我们使用的线程独立于UI主线程，因此这个线程中需要一个来自Activity中的Handler对象(使用类似LocalBroadcast也可以)，来通知Activity刷新UI。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DownLoadThread</span> <span class="keyword">extends</span> <span class="title">Thread</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> interval = <span class="number">500</span>;</span><br><span class="line">    <span class="keyword">private</span> AppItem mApp;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> MainActivity.DownloadHandler mHandler;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 构造函数中传入一个间隔时间值，用来控制每一个Item的刷新速度，模拟不同应用下载速度不同</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">DownLoadThread</span><span class="params">(<span class="keyword">int</span> time, AppItem app, MainActivity.DownloadHandler handler)</span> </span>&#123;</span><br><span class="line">        interval = time;</span><br><span class="line">        mApp = app;</span><br><span class="line">        mHandler = handler;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">101</span>; i++) &#123;</span><br><span class="line">                Thread.sleep(interval);</span><br><span class="line">                <span class="comment">// 不断更新AppItem中的进度百分比</span></span><br><span class="line">                mApp.setCurrentProgress(i);</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 在这里可以设置一些条件来控制发送UI更新消息的频率，以免每变化1%就刷新UI</span></span><br><span class="line">                <span class="keyword">if</span> (someCondition) &#123;</span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 获取Item对应的index，并向Handler发送消息</span></span><br><span class="line">                <span class="keyword">int</span> index = mApp.getAppIndex();</span><br><span class="line">                Message msg = mHandler.obtainMessage(MainActivity.UPDATE_PROGRESS);</span><br><span class="line">                msg.what = MainActivity.UPDATE_PROGRESS;</span><br><span class="line">                msg.arg1 = index;</span><br><span class="line">                mHandler.sendMessage(msg);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>然后来编写消息处理最核心的Handler部分，<br>1.采用Android推荐方式，将Handler声明为静态内部类，并使用弱引用，以避免内存泄漏<br>2.通过Message中的arg1来得到Item的index数值，通过listView的getFirstVisiblePosition与getLastVisiblePosition方法，来判断要更新的Item是否在可见区域内，如果当前不可见，就无需更新，这样提高效率。<br>3.通过Item的index与firstViewIndex差值，来得到View对象的偏移量。接下来使用getChildAt来获取到屏幕中对应的View<br>4.调用我们在Adapter中添加的updateView函数来更新特定View，而不是刷新整个ListView<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">DownloadHandler</span> <span class="keyword">extends</span> <span class="title">Handler</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        WeakReference&lt;MainActivity&gt; activity;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">DownloadHandler</span><span class="params">(MainActivity mainActivity)</span> </span>&#123;</span><br><span class="line">            activity = <span class="keyword">new</span> WeakReference&lt;MainActivity&gt;(mainActivity);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">handleMessage</span><span class="params">(Message msg)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">switch</span> (msg.what) &#123;</span><br><span class="line">                <span class="keyword">case</span> UPDATE_PROGRESS:</span><br><span class="line">                    <span class="comment">// 获取到我们传递来的index</span></span><br><span class="line">                    <span class="keyword">int</span> index = msg.arg1;</span><br><span class="line">                    <span class="keyword">int</span> firstViewIndex = activity.get().getListView().getFirstVisiblePosition();</span><br><span class="line">                    <span class="keyword">int</span> lastViewIndex = activity.get().getListView().getLastVisiblePosition();</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// 仅当需要更新的Item可见，才进行更新，否则直接跳出</span></span><br><span class="line">                    <span class="keyword">if</span> (index &gt;= firstViewIndex &amp;&amp; index &lt;= lastViewIndex) &#123;</span><br><span class="line">                        <span class="comment">// 计算index与可见view的偏移量，获取到真正的view对象</span></span><br><span class="line">                        <span class="comment">// 由于getChildAt接口获取的是屏幕显示的所有view中的第i个:</span></span><br><span class="line">                        <span class="comment">// 例如ListView区域最多可以显示5个item，getChildAt(2)拿到的是第2个view，并不一定是整个list中的第2个。</span></span><br><span class="line">                        <span class="keyword">int</span> offset = index - firstViewIndex;</span><br><span class="line">                        View view = activity.get().getListView().getChildAt(offset);</span><br><span class="line">                        activity.get().getListAdapter().updateView(view, index);</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="comment">// 并不采用notifyDataSetChanged的方式，因为会刷新整个列表，效率很低</span></span><br><span class="line">                    <span class="comment">//activity.get().getListAdapter().notifyDataSetChanged();</span></span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                <span class="keyword">default</span>:</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>最后为了模拟这一过程，在一个按钮的点击事件中创建并启动若干线程，来模拟下载过程：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">mButton.setOnClickListener(<span class="keyword">new</span> View.OnClickListener() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">        startDownload();</span><br><span class="line">&#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">startDownload</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 100ms更新间隔</span></span><br><span class="line">    DownLoadThread threadA = <span class="keyword">new</span> DownLoadThread(<span class="number">100</span>, mData.get(<span class="number">0</span>), mHandler);</span><br><span class="line">    threadA.start();</span><br><span class="line">    <span class="comment">// 200ms</span></span><br><span class="line">    DownLoadThread threadB = <span class="keyword">new</span> DownLoadThread(<span class="number">200</span>, mData.get(<span class="number">2</span>), mHandler);</span><br><span class="line">    threadB.start();</span><br><span class="line">    <span class="comment">//300ms</span></span><br><span class="line">    DownLoadThread threadC = <span class="keyword">new</span> DownLoadThread(<span class="number">500</span>, mData.get(<span class="number">11</span>), mHandler);</span><br><span class="line">    threadC.start();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>直接使用线程比较简陋，这块可考虑AsyncTask或线程池实现，来更好控制多线程的处理。同时线程中使用while循环+退出标志的方式，以在异常情况下迅速停止掉线程。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/android/" rel="tag"># android</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2016/08/23/android_mock_gps/" rel="next" title="Android系统中模拟GPS位置">
+                  <i class="fa fa-chevron-left"></i> Android系统中模拟GPS位置
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2016/09/06/okhttp_error/" rel="prev" title="okhttp异常： java.lang.IllegalStateException: closed">
+                  okhttp异常： java.lang.IllegalStateException: closed <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

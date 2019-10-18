@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="冒泡排序的思路很简单——从头至尾遍历数组元素，若前一项大于（或小于）后一项，则交换相邻两项。单次遍历整个数组可将某一个元素排列到正确位置，因此需要遍历元素数量n次。在代码中体现也就是内外两层循环，内层循环负责遍历中两两元素的交换操作，外层负责遍历次数控制。">
+<meta name="keywords" content="algorithm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="冒泡排序">
+<meta property="og:url" content="https://ucx9002.github.io/2016/07/17/bubblesort_note/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="冒泡排序的思路很简单——从头至尾遍历数组元素，若前一项大于（或小于）后一项，则交换相邻两项。单次遍历整个数组可将某一个元素排列到正确位置，因此需要遍历元素数量n次。在代码中体现也就是内外两层循环，内层循环负责遍历中两两元素的交换操作，外层负责遍历次数控制。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-06-11T08:46:43.976Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="冒泡排序">
+<meta name="twitter:description" content="冒泡排序的思路很简单——从头至尾遍历数组元素，若前一项大于（或小于）后一项，则交换相邻两项。单次遍历整个数组可将某一个元素排列到正确位置，因此需要遍历元素数量n次。在代码中体现也就是内外两层循环，内层循环负责遍历中两两元素的交换操作，外层负责遍历次数控制。">
+  <link rel="canonical" href="https://ucx9002.github.io/2016/07/17/bubblesort_note/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>冒泡排序 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2016/07/17/bubblesort_note/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">冒泡排序
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2016-07-17 16:10:09" itemprop="dateCreated datePublished" datetime="2016-07-17T16:10:09+08:00">2016-07-17</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-06-11 16:46:43" itemprop="dateModified" datetime="2018-06-11T16:46:43+08:00">2018-06-11</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>冒泡排序的思路很简单——从头至尾遍历数组元素，若前一项大于（或小于）后一项，则交换相邻两项。单次遍历整个数组可将某一个元素排列到正确位置，因此需要遍历元素数量n次。在代码中体现也就是内外两层循环，内层循环负责遍历中两两元素的交换操作，外层负责遍历次数控制。</p>
+<a id="more"></a>
+<p>首先看版本1:<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 冒泡排序效率最低写法，没有任何优化步骤</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> arrayToSort</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sortAlpha</span><span class="params">(<span class="keyword">int</span>[] arrayToSort)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; arrayToSort.length; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; (arrayToSort.length - <span class="number">1</span>); j++) &#123;</span><br><span class="line">            <span class="keyword">int</span> tmp;</span><br><span class="line">            <span class="keyword">if</span> (arrayToSort[j] &gt; arrayToSort[j + <span class="number">1</span>]) &#123;</span><br><span class="line">                tmp = arrayToSort[j];</span><br><span class="line">                arrayToSort[j] = arrayToSort[j+<span class="number">1</span>];</span><br><span class="line">                arrayToSort[j+<span class="number">1</span>] = tmp;</span><br><span class="line">            &#125; </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>很明显的两层循环，这里按从小到大排序，因此弱发现后一元素比当前元素大，则交换两个元素的位置，直到比较到最后一个元素为止。因为是<code>j</code>与<code>j+1</code>比较，为避免数组越界，内层for循环需以<code>arrayToSort.length - 1</code>做边界。</p>
+<p>这个版本中没有做任何优化，因为遍历n次后，数组中后n个元素实际已经是排好序的了，因此不需要再进行比较了。所以内层循环还可以进一步优化，得到版本2:<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 冒泡排序优化版本1，减少内层循环遍历个数，已经排序好的元素无需遍历。</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> arrayToSort</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sortBeta</span><span class="params">(<span class="keyword">int</span>[] arrayToSort)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; arrayToSort.length; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; (arrayToSort.length - <span class="number">1</span> - i); j ++) &#123;</span><br><span class="line">            <span class="keyword">int</span> tmp;</span><br><span class="line">            <span class="keyword">if</span> (arrayToSort[j] &gt; arrayToSort[j + <span class="number">1</span>]) &#123;</span><br><span class="line">                tmp = arrayToSort[j];</span><br><span class="line">                arrayToSort[j] = arrayToSort[j+<span class="number">1</span>];</span><br><span class="line">                arrayToSort[j+<span class="number">1</span>] = tmp;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>由于遍历n次后，后n项已经排好序了，因此内层循环上界再减去遍历次数即可，即<code>arrayToSort.length - 1 - i</code>这样每次内层遍历便可减少n次比较操作，提升了效率。</p>
+<p>虽然这时内层循环已经优化操作次数，但如果给一个部分有序的数列，如</p>
+<blockquote>
+<p>{1, 2, 3, 4, 8, 7, 6, 5}</p>
+</blockquote>
+<p><br><br>遍历前四次后，数组实际已经排好序了，这时就不需要再进行比较操作了，因此除了前四次排序，仅在需要一次遍历就可检验出数组有序，也就是公共遍历5次数组就可完成排序了。在当前的逻辑下，会导致出现3次无意义的遍历。<br>解决这个问题的方案也很简单，若数组已经有序，则不会出现交换操作。因此仅需设定一个标志变量，当有交换时置成需要排序（检验）的状态，当所有元素已经有序，检验过程没有交换操作，那么再下次遍历数组直接退出即可，便是版本3:<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 冒泡排序优化版2，减少内部排序遍历个数，并且添加了数据是否有序的检验，</span></span><br><span class="line"><span class="comment"> * 若数组已经有序，无需再进行遍历，直接退出。</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> arrayToSort</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sortGamma</span><span class="params">(<span class="keyword">int</span>[] arrayToSort)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">boolean</span> needSort = <span class="keyword">true</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; arrayToSort.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!needSort) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; (arrayToSort.length - <span class="number">1</span> - i); j ++) &#123;</span><br><span class="line">            needSort = <span class="keyword">false</span>;</span><br><span class="line">            <span class="keyword">int</span> tmp;</span><br><span class="line">            <span class="keyword">if</span> (arrayToSort[j] &gt; arrayToSort[j + <span class="number">1</span>]) &#123;</span><br><span class="line">                tmp = arrayToSort[j];</span><br><span class="line">                arrayToSort[j] = arrayToSort[j+<span class="number">1</span>];</span><br><span class="line">                arrayToSort[j+<span class="number">1</span>] = tmp;</span><br><span class="line">                needSort = <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在每次进入内部循环时重置标志变量，若进行了交换操作则相应改变，进入内层循环前进行判断，若不需要再遍历，直接退出。</p>
+<p>接下来写一些测试代码，来验证三种方案的效率。生成两个数组：一个完全逆序，长度为9999；另一个完全正序，长度同样为9999（不用再排序了），然后分别使用三种排序，统计排序时间，以下是一种方法的调用：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> len = <span class="number">9999</span>;</span><br><span class="line">    <span class="keyword">int</span> test[] = <span class="keyword">new</span> <span class="keyword">int</span>[len];</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; test.length; i++) &#123;</span><br><span class="line">        test[i] = len - <span class="number">1</span> - i;</span><br><span class="line">    &#125;</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">int</span> testNoNeedSort[] = <span class="keyword">new</span> <span class="keyword">int</span>[len];</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; testNoNeedSort.length; i ++) &#123;</span><br><span class="line">        testNoNeedSort[i] = i;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">long</span> startTimeA = System.currentTimeMillis();</span><br><span class="line">    BubbleSort.sortGamma(test);</span><br><span class="line">    <span class="keyword">long</span> endTimeA = System.currentTimeMillis();</span><br><span class="line">    System.out.println(<span class="string">"Time use A:"</span> + (endTimeA - startTimeA));</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">long</span> startTimeB = System.currentTimeMillis();</span><br><span class="line">    BubbleSort.sortGamma(testNoNeedSort);</span><br><span class="line">    <span class="keyword">long</span> endTimeB = System.currentTimeMillis();</span><br><span class="line">    System.out.println(<span class="string">"Time use A:"</span> + (endTimeB - startTimeB));</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>运行三种排序，统计到的时间：</p>
+<table>
+<thead>
+<tr>
+<th>版本</th>
+<th>逆序（最差情况）ms</th>
+<th>正序（最好情况）ms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>版本1</td>
+<td>107</td>
+<td>66</td>
+</tr>
+<tr>
+<td>版本2</td>
+<td>62</td>
+<td>42</td>
+</tr>
+<tr>
+<td>版本3</td>
+<td>60</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>最好情况下由于仅需比较，不需要交换，因此三种版本使用时间均比最差情况短，但由于第三种增加了交换情况的判断，仅需遍历一遍就可完成。<br>最差情况下由于版本2，版本3对内层排序进行了操作数优化，因此显著优于完全没有优化的版本1。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/algorithm/" rel="tag"># algorithm</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2016/07/17/docker_note/" rel="next" title="Docker学习笔记">
+                  <i class="fa fa-chevron-left"></i> Docker学习笔记
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2016/07/18/gradle_config/" rel="prev" title="Gradle仓库配置">
+                  Gradle仓库配置 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

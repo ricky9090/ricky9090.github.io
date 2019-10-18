@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="在开发手机端App时，通常会出现移动端新页面开发的差不多了，后台接口还没Ready，导致前后端联调浪费了大量时间。联调过程中又往往涉及到测试服务的切换、抓包验证以及测试异常数据等测试。进而涉及到App重新打包，配置Charles等抓包工具，后台改数据等等工作，非常麻烦。 今天就使用Node.js实现一个用来调试的server，简化这些调试工作。">
+<meta name="keywords" content="android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Node.js+Express搭建App开发调试Server">
+<meta property="og:url" content="https://ucx9002.github.io/2018/05/22/20180522-01/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="在开发手机端App时，通常会出现移动端新页面开发的差不多了，后台接口还没Ready，导致前后端联调浪费了大量时间。联调过程中又往往涉及到测试服务的切换、抓包验证以及测试异常数据等测试。进而涉及到App重新打包，配置Charles等抓包工具，后台改数据等等工作，非常麻烦。 今天就使用Node.js实现一个用来调试的server，简化这些调试工作。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://img-blog.csdn.net/20180522201235251?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3VjeGlpaQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70">
+<meta property="og:updated_time" content="2019-10-18T07:53:55.324Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用Node.js+Express搭建App开发调试Server">
+<meta name="twitter:description" content="在开发手机端App时，通常会出现移动端新页面开发的差不多了，后台接口还没Ready，导致前后端联调浪费了大量时间。联调过程中又往往涉及到测试服务的切换、抓包验证以及测试异常数据等测试。进而涉及到App重新打包，配置Charles等抓包工具，后台改数据等等工作，非常麻烦。 今天就使用Node.js实现一个用来调试的server，简化这些调试工作。">
+<meta name="twitter:image" content="https://img-blog.csdn.net/20180522201235251?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3VjeGlpaQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70">
+  <link rel="canonical" href="https://ucx9002.github.io/2018/05/22/20180522-01/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>使用Node.js+Express搭建App开发调试Server | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2018/05/22/20180522-01/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">使用Node.js+Express搭建App开发调试Server
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2018-05-22 15:24:41" itemprop="dateCreated datePublished" datetime="2018-05-22T15:24:41+08:00">2018-05-22</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-10-18 15:53:55" itemprop="dateModified" datetime="2019-10-18T15:53:55+08:00">2019-10-18</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在开发手机端App时，通常会出现移动端新页面开发的差不多了，后台接口还没Ready，导致前后端联调浪费了大量时间。<br>联调过程中又往往涉及到测试服务的切换、抓包验证以及测试异常数据等测试。进而涉及到App重新打包，配置Charles等抓包工具，后台改数据等等工作，非常麻烦。</p>
+<p>今天就使用Node.js实现一个用来调试的server，简化这些调试工作。<br><br><a id="more"></a><br>这个server涉及到以下几个功能：</p>
+<ol>
+<li>接口数据的Mock。访问接口即返回我们定义好的假数据，便于在服务端开发完成前就可以测试接口效果。也便于异常值的验证。</li>
+<li>接口转发。在联调阶段不需要Mock数据时，可将请求转发给真正的后台接口。这样无需App更改url打包。</li>
+<li>抓包打印。将App发给调试Server的请求以及服务端返回的数据输出在Web页面上。这可以满足最基本的抓包需求。</li>
+</ol>
+<p>这样我们就可以把调试当中大部分配置工作都放在这个Server上。在Server上做了更改，重启就可生效，省时省力。</p>
+<h2 id="服务搭建"><a href="#服务搭建" class="headerlink" title="服务搭建"></a>服务搭建</h2><h3 id="安装Node与Express框架"><a href="#安装Node与Express框架" class="headerlink" title="安装Node与Express框架"></a>安装Node与Express框架</h3><p>首先安装好Node.js，这个比较简单，用官网的安装包就搞定了。<br>接下来配置Express，使用npm命令<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install express-generator -g</span><br></pre></td></tr></table></figure></p>
+<p>安装好以后使用Express的命令行工具生成Server框架。</p>
+<p>给server起个名字，比如 <strong>avalon</strong><br><br>运行命令<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">express -e avalon</span><br></pre></td></tr></table></figure></p>
+<p>暂时还用不到页面模板的功能，这里就使用 <strong>-e</strong> 参数用ejs作为页面模板。<br><br>Express的工具会生成一个默认的目录结构，我们在此基础上开发就可以。<br><br>默认的目录结构大概如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── app.js</span><br><span class="line">├── bin</span><br><span class="line">│   └── www</span><br><span class="line">├── package.json</span><br><span class="line">├── public</span><br><span class="line">│   ├── images</span><br><span class="line">│   ├── javascripts</span><br><span class="line">│   └── stylesheets</span><br><span class="line">│       └── style.css</span><br><span class="line">├── routes</span><br><span class="line">│   ├── index.js</span><br><span class="line">│   └── users.js</span><br><span class="line">└── views</span><br><span class="line">    ├── error.ejs</span><br><span class="line">    └── index.ejs</span><br></pre></td></tr></table></figure></p>
+<p>bin下的www是启动脚本;public用来提供web页面的静态资源;routes文件夹下是请求路由的代码;views是页面模板文件。<br></p>
+<p>接下来进入到server目录安装依赖<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd avalon</span><br><span class="line">npm install save</span><br></pre></td></tr></table></figure></p>
+<h3 id="启动server"><a href="#启动server" class="headerlink" title="启动server"></a>启动server</h3><p>在server目录下运行命令就可以启动服务了。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node ./bin/www</span><br></pre></td></tr></table></figure></p>
+<h2 id="Mock接口数据"><a href="#Mock接口数据" class="headerlink" title="Mock接口数据"></a>Mock接口数据</h2><p>Mock数据的功能是最好实现的，单纯使用Node.js就可以了。引入Express框架可以更方便的配置路由。<br>假设我们的接口路径是：</p>
+<blockquote>
+<p><a href="http://www.test.com/api/business_one/some.action" target="_blank" rel="noopener">www.test.com/api/business_one/some.action</a></p>
+</blockquote>
+<p>修改的步骤如下：<br></p>
+<h3 id="添加接口的路由配置"><a href="#添加接口的路由配置" class="headerlink" title="添加接口的路由配置"></a>添加接口的路由配置</h3><p>在app.js中<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> businessOneRouter = <span class="built_in">require</span>(<span class="string">'./routes/router_one'</span>);</span><br><span class="line"></span><br><span class="line">app.use(<span class="string">'/api'</span>, businessOneRouter);</span><br></pre></td></tr></table></figure></p>
+<h3 id="添加路由代码"><a href="#添加路由代码" class="headerlink" title="添加路由代码"></a>添加路由代码</h3><p>接下来在routes文件夹下添加名为router_one.js的文件<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">var</span> router = express.Router();</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> result = &#123;</span><br><span class="line">  <span class="string">"data"</span>: &#123;</span><br><span class="line">    <span class="string">"location"</span>: <span class="string">"北京"</span>,</span><br><span class="line">    <span class="string">"lat"</span>: <span class="string">"39.90498734"</span>,</span><br><span class="line">    <span class="string">"lon"</span>: <span class="string">"116.40528870"</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">"status"</span>: <span class="string">"ok"</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">router.get(<span class="string">'/business_one/some.action'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">req, res, next</span>) </span>&#123;</span><br><span class="line">  res.send(result);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = router;</span><br></pre></td></tr></table></figure></p>
+<p>这样就完成了接口数据的mock。</p>
+<h2 id="接口转发"><a href="#接口转发" class="headerlink" title="接口转发"></a>接口转发</h2><h3 id="接口转发流程"><a href="#接口转发流程" class="headerlink" title="接口转发流程"></a>接口转发流程</h3><p>接下来实现接口的转发。<br><br>为了避免其他应用也通过调试server转发，带来大量无效数据。因此与通用的抓包工具不同，我们仅让待开发的App请求调试server——通过更改debug版本中的服务器host实现。这样也就不需要手机或PC端配置代理了。<br><br>手机端发来请求以后，server向后端发起真正的请求，保持Header及参数与客户端完全一致，将host替换为真正的服务器地址。接收到服务端返回结果后，同样将Header与数据原样返回给客户端。</p>
+<p>这一大致流程如下：</p>
+<blockquote>
+<p>客户端发起请求–&gt;调试server接收–&gt;调试server向后端发起真正请求–&gt;后端返回结果–&gt;调试server将结果返回给客户端</p>
+</blockquote>
+<p>为了方便描述，下面我们使用 <strong>cnodejs.org</strong> 与 <strong>v2ex.com</strong> 两个网站公开的api作为测试接口。</p>
+<h3 id="封装转发模块"><a href="#封装转发模块" class="headerlink" title="封装转发模块"></a>封装转发模块</h3><p>我们将转发封装为模块，向外暴露一个接口即可。在项目下创建文件 <code>proxyHelper.js</code>。<br>首先定义一个转发的入口方法，供我们在路由中调用：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">proxyRequest</span>(<span class="params">req, res, hostStr, method</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> options = optionFactoryWithHost(req, hostStr);  <span class="comment">// 生成请求配置</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (method === <span class="string">'https'</span>) &#123;</span><br><span class="line">    <span class="comment">// https的转发</span></span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// http的转发</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong>req</strong> 与 <strong>res</strong> 均为router回调传递进来的参数。考虑到后台接口的服务可能不同，在这里需要提供服务器地址。此外为支持http与https两种方式访问，这里也通过参数来进行处理。<br><br>这个接口对外暴露，直接在 <code>router</code> 里使用：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">router.get(<span class="string">'/api/nodes/show.json'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">req, res, next</span>) </span>&#123;</span><br><span class="line">  proxyRequest(req, res, <span class="string">'www.v2ex.com'</span>, <span class="string">'https'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>在 <code>proxyHelper.js</code> 末尾导出函数<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">exports.proxyRequest = proxyRequest;</span><br></pre></td></tr></table></figure></p>
+<p>在node中发起请求需要使用 <code>http.request</code> 方法，这个接口的第一个参数为请求的配置。因此在转发前，先根据传递进来的参数生成请求配置<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 创建request的option, 用户指定host</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">optionFactoryWithHost</span>(<span class="params">req, hostStr</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> option = &#123;</span><br><span class="line">    host: hostStr,</span><br><span class="line">    path: req.url,</span><br><span class="line">    method: req.method,</span><br><span class="line">    headers: getHeader(req)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> option</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 拷贝原request的header字段</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getHeader</span>(<span class="params">req</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> ret = &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> i <span class="keyword">in</span> req.headers) &#123;</span><br><span class="line">    <span class="keyword">if</span> (i !== <span class="string">'host'</span>) &#123; <span class="comment">// 去掉host</span></span><br><span class="line">      ret[i] = req.headers[i];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> ret;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>请求中的 <strong>host</strong> 与 <strong>path</strong> 分别来自 <code>proxyRequest</code> 的 <strong>hostStr</strong> 与 <strong>req</strong> 参数。<code>getHeader</code> 函数遍历并复制客户端请求中的header字段。<br><br>获取header后，就可以请求真正的服务端了。我们通过 <code>http.request</code> 发起异步请求，返回结果后主要做两件事：<br></p>
+<ol>
+<li>将结果原样返回给客户端。</li>
+<li>分别抽取请求头与响应，把数据发送给指定页面打log。</li>
+</ol>
+<p>第二步稍后再做。考虑到整个操作是异步的，我们可以使用Promise来封装，让代码更利于维护。调用时就是这个形式：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">doRequest(options, req, res)</span><br><span class="line">  .then(handleRealResponse)  <span class="comment">// 响应服务端返回结果</span></span><br><span class="line">  .then(handleMessage)  <span class="comment">// 向页面发送数据</span></span><br><span class="line">  .catch(<span class="function"><span class="keyword">function</span> (<span class="params">e</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.error(<span class="string">`request error: <span class="subst">$&#123;e.message&#125;</span>`</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>完整的 <code>proxyRequest</code> 函数如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">proxyRequest</span>(<span class="params">req, res, hostStr, method</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> options = optionFactoryWithHost(req, hostStr);</span><br><span class="line">  <span class="built_in">console</span>.log(options);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (method === <span class="string">'https'</span>) &#123;</span><br><span class="line">    doRequestHttps(options, req, res)</span><br><span class="line">      .then(handleRealResponse)</span><br><span class="line">      .then(handleMessage)</span><br><span class="line">      .catch(<span class="function"><span class="keyword">function</span> (<span class="params">e</span>) </span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.error(<span class="string">`request error: <span class="subst">$&#123;e.message&#125;</span>`</span>);</span><br><span class="line">      &#125;);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    doRequest(options, req, res)</span><br><span class="line">      .then(handleRealResponse)</span><br><span class="line">      .then(handleMessage)</span><br><span class="line">      .catch(<span class="function"><span class="keyword">function</span> (<span class="params">e</span>) </span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.error(<span class="string">`request error: <span class="subst">$&#123;e.message&#125;</span>`</span>);</span><br><span class="line">      &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>接下来是 <code>doRequest</code> 的实现( <code>doRequestHttps</code> 替换为 <code>https.request</code> 即可，其余一致)：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 使用http请求接口</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">doRequest</span>(<span class="params">options, req, res</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span> (<span class="params">resolve, reject</span>) </span>&#123;</span><br><span class="line">    <span class="comment">// 请求真正的api接口</span></span><br><span class="line">    <span class="keyword">const</span> innerReq = http.request(options, (innerRes) =&gt; &#123;</span><br><span class="line">      <span class="keyword">let</span> data = &#123;</span><br><span class="line">        <span class="string">'req'</span>: req,</span><br><span class="line">        <span class="string">'res'</span>: res,</span><br><span class="line">        <span class="string">'options'</span>: options,</span><br><span class="line">        <span class="string">'_res'</span>: innerRes</span><br><span class="line">      &#125;;</span><br><span class="line">      resolve(data);</span><br><span class="line">    &#125;);</span><br><span class="line">    innerReq.on(<span class="string">'error'</span>, (e) =&gt; &#123;</span><br><span class="line">      reject(e);</span><br><span class="line">    &#125;);</span><br><span class="line">    innerReq.end();</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong>Promise</strong> 的 <code>resolve</code> 只有一个参数，因此将所有需要的参数封装到对象中。这里的 <code>resolve</code> 对应 <code>handleRealResponse</code> 函数：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">handleRealResponse</span>(<span class="params">data</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span> (<span class="params">resolve, reject</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> req = data[<span class="string">'req'</span>];  <span class="comment">// 客户端请求</span></span><br><span class="line">    <span class="keyword">let</span> res = data[<span class="string">'res'</span>];  <span class="comment">// 返回给客户端的response</span></span><br><span class="line">    <span class="keyword">let</span> options = data[<span class="string">'options'</span>];  <span class="comment">// 请求参数</span></span><br><span class="line">    <span class="keyword">let</span> _res = data[<span class="string">'_res'</span>];  <span class="comment">// 服务端的返回</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">`STATUS: <span class="subst">$&#123;_res.statusCode&#125;</span>`</span>);</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">`HEADERS: <span class="subst">$&#123;<span class="built_in">JSON</span>.stringify(_res.headers)&#125;</span>`</span>);</span><br><span class="line">    res.writeHead(_res.statusCode, _res.headers);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> gzip = <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">let</span> responseData = <span class="string">''</span>;</span><br><span class="line">    <span class="keyword">if</span> (_res.headers[<span class="string">'content-encoding'</span>] == <span class="string">'gzip'</span>) &#123;  <span class="comment">// gzip压缩情况下</span></span><br><span class="line">      <span class="built_in">console</span>.log(<span class="string">'handle gzip response'</span>);</span><br><span class="line">      gzip = zlib.createGunzip();</span><br><span class="line">      _res.on(<span class="string">'data'</span>, (chunk) =&gt; &#123;</span><br><span class="line">        res.write(chunk);</span><br><span class="line">        gzip.write(chunk);</span><br><span class="line">      &#125;);</span><br><span class="line">      _res.on(<span class="string">'end'</span>, () =&gt; &#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'res complete'</span>);</span><br><span class="line">        res.end();</span><br><span class="line">        gzip.end();</span><br><span class="line">      &#125;);</span><br><span class="line">      gzip.on(<span class="string">'data'</span>, (chunk) =&gt; &#123;</span><br><span class="line">        responseData += chunk;</span><br><span class="line">      &#125;);</span><br><span class="line">      gzip.on(<span class="string">'end'</span>, () =&gt; &#123;  <span class="comment">// 由gzip流end向socket.io发送</span></span><br><span class="line">        <span class="keyword">let</span> data = &#123;</span><br><span class="line">          <span class="string">'req'</span>: req,</span><br><span class="line">          <span class="string">'type'</span>: <span class="string">'request log'</span>,</span><br><span class="line">          <span class="string">'message'</span>: <span class="string">'request header: '</span> + <span class="built_in">JSON</span>.stringify(options) + <span class="string">' response data: '</span> + responseData</span><br><span class="line">        &#125;</span><br><span class="line">        resolve(data);</span><br><span class="line">      &#125;);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  <span class="comment">// 未压缩情况下</span></span><br><span class="line">      <span class="built_in">console</span>.log(<span class="string">'handle normal response'</span>);</span><br><span class="line">      _res.on(<span class="string">'data'</span>, (chunk) =&gt; &#123;</span><br><span class="line">        res.write(chunk);</span><br><span class="line">        responseData += chunk;</span><br><span class="line">      &#125;);</span><br><span class="line">      _res.on(<span class="string">'end'</span>, () =&gt; &#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'res complete'</span>);</span><br><span class="line">        res.end();</span><br><span class="line">        <span class="keyword">let</span> data = &#123;</span><br><span class="line">          <span class="string">'req'</span>: req,</span><br><span class="line">          <span class="string">'type'</span>: <span class="string">'request log'</span>,</span><br><span class="line">          <span class="string">'message'</span>: <span class="string">'request header: '</span> + <span class="built_in">JSON</span>.stringify(options) + <span class="string">' response data: '</span> + responseData</span><br><span class="line">        &#125;</span><br><span class="line">        resolve(data);</span><br><span class="line">      &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>handleRealResponse</code> 中 <strong>res</strong> 是要给客户端返回的结果， <strong>_res</strong> 是服务端返回给调试server的结果。在这里有以下几步处理</p>
+<ol>
+<li>把要返回的header复制给客户端</li>
+<li>判断服务端是否使用gzip对数据进行了压缩，若有压缩创建一个gzip数据流还原数据</li>
+<li>在服务端 <strong>_res</strong> 的 <strong>data</strong> 事件中向客户端 <strong>res</strong> 与 <strong>gzip流</strong>（数据压缩的情况下）复制数据</li>
+<li>在 <strong>_res</strong> 或 <strong>gzip流</strong> 的 <strong>end</strong> 事件中调用 <code>resolve</code> 触发下一步处理</li>
+</ol>
+<h2 id="抓包打印"><a href="#抓包打印" class="headerlink" title="抓包打印"></a>抓包打印</h2><p>客户端每请求一次接口，就向指定页面发送请求数据。这与聊天软件的场景比较相似，因此可以使用socket.io库来实现这个功能。恰好socket.io官网的demo就是聊天室服务，直接在这个demo基础上做更改就可以了。参考地址( <a href="https://socket.io/get-started/chat/" target="_blank" rel="noopener">https://socket.io/get-started/chat/</a> )</p>
+<h3 id="添加log查看页面"><a href="#添加log查看页面" class="headerlink" title="添加log查看页面"></a>添加log查看页面</h3><p>首先把Socket.io 官网Demo中的页面文件复制到项目下，做一些更改（把聊天发送消息相关代码删掉）：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!doctype html&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>Avalon Test Page<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">style</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="undefined">        * &#123;</span></span><br><span class="line"><span class="undefined">            margin: 0;</span></span><br><span class="line"><span class="undefined">            padding: 0;</span></span><br><span class="line"><span class="undefined">            box-sizing: border-box;</span></span><br><span class="line"><span class="undefined">        &#125;</span></span><br><span class="line"><span class="undefined">        body &#123;</span></span><br><span class="line"><span class="undefined">            font: 13px Helvetica, Arial;</span></span><br><span class="line"><span class="undefined">        &#125;</span></span><br><span class="line"><span class="undefined">        #messages &#123;</span></span><br><span class="line"><span class="undefined">            list-style-type: none;</span></span><br><span class="line"><span class="undefined">            margin: 0;</span></span><br><span class="line"><span class="undefined">            padding: 0;</span></span><br><span class="line"><span class="undefined">        &#125;</span></span><br><span class="line"><span class="undefined">        #messages div &#123;</span></span><br><span class="line"><span class="undefined">            padding: 5px 10px;</span></span><br><span class="line"><span class="undefined">        &#125;</span></span><br><span class="line"><span class="undefined">        #messages div:nth-child(odd) &#123;</span></span><br><span class="line"><span class="undefined">            background: #eee;</span></span><br><span class="line"><span class="undefined">        &#125;</span></span><br><span class="line"><span class="undefined">    </span><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"/javascripts/socket.io.dev.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"https://code.jquery.com/jquery-1.11.1.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="javascript">        $(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span></span><br><span class="line"><span class="javascript">            <span class="keyword">var</span> socket = io();</span></span><br><span class="line"><span class="javascript">            socket.on(<span class="string">'request log'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">msg</span>) </span>&#123;</span></span><br><span class="line"><span class="javascript">                $(<span class="string">'#messages'</span>).append($(<span class="string">'&lt;div&gt;'</span>)).text(msg));</span></span><br><span class="line"><span class="undefined">            &#125;);</span></span><br><span class="line"><span class="undefined">        &#125;);</span></span><br><span class="line"><span class="undefined">    </span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"messages"</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>页面文件在用户访问特定url时通过浏览器载入，因此需要在express配置一个路由。<br><br><code>app.js</code> 中添加<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> logRouter = <span class="built_in">require</span>(<span class="string">'./routes/log_page'</span>);</span><br><span class="line">app.use(<span class="string">'/avalon_log'</span>, logRouter);</span><br></pre></td></tr></table></figure></p>
+<p>routes文件夹下添加 <code>log_page.js</code> 文件<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">var</span> path = <span class="built_in">require</span>(<span class="string">'path'</span>);</span><br><span class="line"><span class="keyword">var</span> router = express.Router();</span><br><span class="line"></span><br><span class="line">router.get(<span class="string">'/'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">req, res, next</span>) </span>&#123;</span><br><span class="line">  res.sendFile(path.join(__dirname, <span class="string">'../pages'</span>, <span class="string">'log_page.html'</span>));</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = router;</span><br></pre></td></tr></table></figure></p>
+<p>需要注意express的router中必须使用绝对路径，因此通过 <code>path.join</code>生成。</p>
+<p>在页面载入时就会初始化客户端的 <strong>socket.io</strong> ，我们定义接收消息的名称是<strong>request log</strong>。相应的，服务端转发模块下添加发送消息的函数 <code>handleMessage</code><br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">handleMessage</span>(<span class="params">data</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (data === <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> req = data[<span class="string">'req'</span>];</span><br><span class="line">  <span class="keyword">let</span> type = data[<span class="string">'type'</span>];</span><br><span class="line">  <span class="keyword">let</span> message = data[<span class="string">'message'</span>];</span><br><span class="line">  emitData(req, type, message);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">emitData</span>(<span class="params">req, type, message</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> io = req.app.get(<span class="string">'logcaster'</span>);</span><br><span class="line">  <span class="keyword">if</span> (io !== <span class="literal">null</span>) &#123;</span><br><span class="line">    io.emit(type, message);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>内部调用 <code>emitData</code> 发送数据。这里的socket.io对象是通过下面这条语句获取的。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> io = req.app.get(<span class="string">'logcaster'</span>);</span><br></pre></td></tr></table></figure></p>
+<p>我们已经在最初的Promise调用中设定 <code>handleMessage</code> 函数了，因此无需再添加调用。</p>
+<h3 id="引入socket-io库"><a href="#引入socket-io库" class="headerlink" title="引入socket.io库"></a>引入socket.io库</h3><p>服务端的socket.io需要在服务端启动时初始化。在bin/www文件中添加初始化代码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> server = http.createServer(app);</span><br><span class="line"><span class="keyword">var</span> io = <span class="built_in">require</span>(<span class="string">'socket.io'</span>)(server);</span><br><span class="line">app.set(<span class="string">'logcaster'</span>, io);  <span class="comment">// 把socket.io添加到全局对象中，以便router中获取</span></span><br><span class="line">io.on(<span class="string">'connection'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">socket</span>)</span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'a user connected'</span>);  <span class="comment">// 客户端有连接上后，打印一条语句</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>这样socket.io相关的代码就编写完成了。<br><br>但此时项目中还没有socket.io的库文件。向package.json中添加依赖<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">"dependencies": &#123;</span><br><span class="line">    "socket.io": "^2.1.0"</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>并使用npm命令安装<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install save</span><br></pre></td></tr></table></figure></p>
+<p>刚才我们在页面文件中指定了客户端载入socket.io代码的路径，</p>
+<blockquote>
+<p>src=”/javascripts/socket.io.dev.js”</p>
+</blockquote>
+<p>因此我们需要把socket.io的库文件拷贝到 <strong>javascripts</strong> 文件夹下。库文件在npm命令安装后，可在 <strong>node_modules</strong> 文件夹里找到。</p>
+<h2 id="使用server"><a href="#使用server" class="headerlink" title="使用server"></a>使用server</h2><p>现在调试server的基本功能就开发完成了。可以使用几个接口简单测试一下。<br><br>直接在 <code>index.js</code> 里添加几个路由：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">const</span> router = express.Router();</span><br><span class="line"><span class="keyword">const</span> proxyRequest = <span class="built_in">require</span>(<span class="string">'../proxyHelper'</span>).proxyRequest;  <span class="comment">// 引入转发模块</span></span><br><span class="line"></span><br><span class="line">router.get(<span class="string">'/api/v1/user/alsotang'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">req, res, next</span>) </span>&#123;</span><br><span class="line">  proxyRequest(req, res, <span class="string">'cnodejs.org'</span>, <span class="string">'https'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">router.get(<span class="string">'/api/topics/latest.json'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">req, res, next</span>) </span>&#123;</span><br><span class="line">  proxyRequest(req, res, <span class="string">'www.v2ex.com'</span>, <span class="string">'https'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">router.get(<span class="string">'/api/nodes/show.json'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">req, res, next</span>) </span>&#123;</span><br><span class="line">  proxyRequest(req, res, <span class="string">'www.v2ex.com'</span>, <span class="string">'https'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = router;</span><br></pre></td></tr></table></figure></p>
+<p>在命令行下启动server<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node ./bin/www</span><br></pre></td></tr></table></figure></p>
+<p>打开浏览器访问页面 <a href="http://127.0.0.1:3000/avalon_log" target="_blank" rel="noopener">http://127.0.0.1:3000/avalon_log</a> <br><br>我们在socket.io中配置了connection事件的处理，因此node的控制台上会输出 <strong>a user connected</strong> <br></p>
+<p>然后打开新的浏览器窗口作为“客户端”（或在App代码里写几个请求），访问这三个连接<br><br><a href="http://127.0.0.1:3000/api/v1/user/alsotang" target="_blank" rel="noopener">http://127.0.0.1:3000/api/v1/user/alsotang</a> <br><br><a href="http://127.0.0.1:3000/api/topics/latest.json" target="_blank" rel="noopener">http://127.0.0.1:3000/api/topics/latest.json</a> <br><br><a href="http://127.0.0.1:3000/api/nodes/show.json?name=python" target="_blank" rel="noopener">http://127.0.0.1:3000/api/nodes/show.json?name=python</a> <br></p>
+<p>应该可以看到浏览器显示了正确的json数据，同时log页面上刷新出了最新的请求数据信息。<br><img src="https://img-blog.csdn.net/20180522201235251?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3VjeGlpaQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="截图"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>每次添加新的接口，需要以下几步<br></p>
+<ol>
+<li>添加一个router</li>
+<li>在router中添加转发或mock数据逻辑</li>
+<li>重启服务器</li>
+<li>打开log页面，以便查看请求抓包结果</li>
+</ol>
+<h2 id="TODO"><a href="#TODO" class="headerlink" title="TODO"></a>TODO</h2><p>目前这个调试Server基本能用，但非常简陋，有很多可以完善的地方：<br></p>
+<ol>
+<li>完善post接口的转发</li>
+<li>请求log是实时发送到连接了服务端的页面，可以使用数据库持久化存储</li>
+<li>一些特殊请求，数据中的特殊字符的处理</li>
+<li>Mock数据需要每次更改server源码并重启，可以添加上传mock数据或从文件读取的功能</li>
+<li>log查看页面的优化</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/android/" rel="tag"># android</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2018/04/04/20180404-01/" rel="next" title="升级Retrofit2遇到的POST请求中Content-Type字段问题">
+                  <i class="fa fa-chevron-left"></i> 升级Retrofit2遇到的POST请求中Content-Type字段问题
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2019/06/10/20190610-01/" rel="prev" title="Android中使用Kotlin协程代替RxJava封装网络请求">
+                  Android中使用Kotlin协程代替RxJava封装网络请求 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#服务搭建"><span class="nav-number">1.</span> <span class="nav-text">服务搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#安装Node与Express框架"><span class="nav-number">1.1.</span> <span class="nav-text">安装Node与Express框架</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#启动server"><span class="nav-number">1.2.</span> <span class="nav-text">启动server</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Mock接口数据"><span class="nav-number">2.</span> <span class="nav-text">Mock接口数据</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#添加接口的路由配置"><span class="nav-number">2.1.</span> <span class="nav-text">添加接口的路由配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#添加路由代码"><span class="nav-number">2.2.</span> <span class="nav-text">添加路由代码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#接口转发"><span class="nav-number">3.</span> <span class="nav-text">接口转发</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#接口转发流程"><span class="nav-number">3.1.</span> <span class="nav-text">接口转发流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#封装转发模块"><span class="nav-number">3.2.</span> <span class="nav-text">封装转发模块</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#抓包打印"><span class="nav-number">4.</span> <span class="nav-text">抓包打印</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#添加log查看页面"><span class="nav-number">4.1.</span> <span class="nav-text">添加log查看页面</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#引入socket-io库"><span class="nav-number">4.2.</span> <span class="nav-text">引入socket.io库</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用server"><span class="nav-number">5.</span> <span class="nav-text">使用server</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">5.1.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TODO"><span class="nav-number">6.</span> <span class="nav-text">TODO</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="今天研究了一下自定义View中XML属性的解析。 首先，我们在声明自定义View时，会直接声明构造函数：1public XCustomView(Context context, AttributeSet attrs)">
+<meta name="keywords" content="android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android自定义View读取XML属性详解">
+<meta property="og:url" content="https://ucx9002.github.io/2016/04/20/android_view_xml/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="今天研究了一下自定义View中XML属性的解析。 首先，我们在声明自定义View时，会直接声明构造函数：1public XCustomView(Context context, AttributeSet attrs)">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-06-11T08:46:43.970Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android自定义View读取XML属性详解">
+<meta name="twitter:description" content="今天研究了一下自定义View中XML属性的解析。 首先，我们在声明自定义View时，会直接声明构造函数：1public XCustomView(Context context, AttributeSet attrs)">
+  <link rel="canonical" href="https://ucx9002.github.io/2016/04/20/android_view_xml/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Android自定义View读取XML属性详解 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2016/04/20/android_view_xml/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">Android自定义View读取XML属性详解
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2016-04-20 14:09:59" itemprop="dateCreated datePublished" datetime="2016-04-20T14:09:59+08:00">2016-04-20</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-06-11 16:46:43" itemprop="dateModified" datetime="2018-06-11T16:46:43+08:00">2018-06-11</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>今天研究了一下自定义View中XML属性的解析。</p>
+<p>首先，我们在声明自定义View时，会直接声明构造函数：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">XCustomView</span><span class="params">(Context context, AttributeSet attrs)</span></span></span><br></pre></td></tr></table></figure></p>
+<a id="more"></a>
+<p>构造函数接受了一个context变量和一个attrs变量，我们使用attrs就可以解析XML属性了。<br>这里通常使用的方法是声明一个TypedArray变量，通过context.obtainStyledAttributes方法来获取attrs中的属性；实际这里直接使用attrs来解析也是可以的，但会稍麻烦一些。</p>
+<h3 id="自定义View的声明"><a href="#自定义View的声明" class="headerlink" title="自定义View的声明"></a><strong>自定义View的声明</strong></h3><p>假设我们的自定义View类名是XCustomView，对应的，先声明一些自定义属性：<br>CustomViewStyleable.xml<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">resources</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">declare-styleable</span> <span class="attr">name</span>=<span class="string">"XCustomView"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">attr</span> <span class="attr">name</span>=<span class="string">"testAttrFirst"</span> <span class="attr">format</span>=<span class="string">"integer"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">attr</span> <span class="attr">name</span>=<span class="string">"testAttrSecond"</span> <span class="attr">format</span>=<span class="string">"string"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">declare-styleable</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">resources</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>简单定义两个属性，其值分别为整形和字符串类型。</p>
+<p>接下来简单写一个Activity的布局文件,在以前使用eclipse时，在指定我们自定义属性的名字时，需要在xmlns后指定包名；<strong>在Android Studio环境下，由于整个项目使用gradle构建，因此包名根据设置可以在编译时产生变化</strong>，IDE此时提示我们不要硬编码将包名设置进去，只需要使用特殊字段来标识就可以：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xmlns:custom_name=&quot;http://schemas.android.com/apk/res-auto&quot;</span><br></pre></td></tr></table></figure></p>
+<p>只需要将custom_name替换为我们自定义的名字即可。<br>整个activity布局是这样的：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">LinearLayout</span></span></span><br><span class="line"><span class="tag">    <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">xmlns:tools</span>=<span class="string">"http://schemas.android.com/tools"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">xmlns:xcustom</span>=<span class="string">"http://schemas.android.com/apk/res-auto"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_height</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:orientation</span>=<span class="string">"vertical"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">tools:context</span>=<span class="string">"com.example.customviewstudy.MainActivity"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">com.example.customviewstudy.XCustomView</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:id</span>=<span class="string">"@+id/custom_view"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_width</span>=<span class="string">"100dp"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_height</span>=<span class="string">"200dp"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xcustom:testAttrFirst</span>=<span class="string">"12345"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xcustom:testAttrSecond</span>=<span class="string">"HelloCustomView"</span>/&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">LinearLayout</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>我们为XCustomView控件指定了5个属性，其中有两个是自定义属性。</p>
+<h3 id="TypedArray获取方法"><a href="#TypedArray获取方法" class="headerlink" title="TypedArray获取方法"></a><strong>TypedArray获取方法</strong></h3><p>接下来，首先来看使用TypedArray的方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">XCustomView</span> <span class="keyword">extends</span> <span class="title">View</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAG = <span class="string">"CustomView-TAG"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">XCustomView</span><span class="params">(Context context, AttributeSet attrs)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(context, attrs);</span><br><span class="line"></span><br><span class="line">        TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.XCustomView);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">int</span> testAttrFirstValue = array.getInt(R.styleable.XCustomView_testAttrFirst, <span class="number">100</span>);</span><br><span class="line">        Log.d(TAG, <span class="string">"testAttrFirstValue: "</span> + testAttrFirstValue);</span><br><span class="line">        String testAttrSecondValue = array.getString(R.styleable.XCustomView_testAttrSecond);</span><br><span class="line">        Log.d(TAG, <span class="string">"testAttrSecondValue: "</span> + testAttrSecondValue);</span><br><span class="line"></span><br><span class="line">        array.recycle();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>使用context.obtainStyledAttributes方法来生成TypedArray。<br>这个函数接收两个参数：<br><strong>构造函数中的AttributeSet类型变量</strong> attrs，<br><strong>int[]型数组，需传入刚才自定义的xml文件对应变量</strong> R.styleable.XCustomView，这里传入其他的数组（如R.styleable.View），不会报任何错误，不过后面也就解析不出自定义属性了。</p>
+<p>得到TypedArray变量后，通过一系列get方法就可以获取到相应属性了，例如<br>int testAttrFirstValue = array.getInt(R.styleable.XCustomView_testAttrFirst, 100);<br>其中需要自定义属性所对应的R变量R.styleable.XCustomView_testAttrFirst，以及给定一个默认值（100）。<br>最后不要忘记TypedArray使用后要通过recycle方法回收，否则会引起内存泄漏。<br>上面代码运行后输出：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">D/CustomView-TAG: testAttrFirstValue: 12345</span><br><span class="line">D/CustomView-TAG: testAttrSecondValue: HelloCustomView</span><br></pre></td></tr></table></figure></p>
+<h3 id="AttributeSet获取方法"><a href="#AttributeSet获取方法" class="headerlink" title="AttributeSet获取方法"></a><strong>AttributeSet获取方法</strong></h3><p>下面来看看AttributeSet直接获取的方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">XCustomView</span> <span class="keyword">extends</span> <span class="title">View</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAG = <span class="string">"CustomView-TAG"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">XCustomView</span><span class="params">(Context context, AttributeSet attrs)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(context, attrs);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i =<span class="number">0</span>; i &lt; attrs.getAttributeCount(); i++) &#123;</span><br><span class="line">            Log.d(TAG, <span class="string">"attrs get No."</span> + i + <span class="string">" attr name: "</span> + attrs.getAttributeName(i) + <span class="string">", value: "</span> + attrs.getAttributeValue(i));</span><br><span class="line">        &#125;</span><br><span class="line">        Log.d(TAG, <span class="string">"attrs get first value: "</span> + attrs.getAttributeIntValue(<span class="string">"http://schemas.android.com/apk/res-auto"</span>, <span class="string">"testAttrFirst"</span>, <span class="number">100</span>));</span><br><span class="line">        Log.d(TAG, <span class="string">"attrs get second value: "</span> + attrs.getAttributeValue(<span class="string">"http://schemas.android.com/apk/res-auto"</span>, <span class="string">"testAttrSecond"</span>));</span><br><span class="line">        Log.d(TAG, <span class="string">"attrs count: "</span> + attrs.getAttributeCount());</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ol>
+<li>通过<strong>getAttributeCount</strong>方法，就可以获得控件总共的属性数量；</li>
+<li><strong>getAttributeName</strong>来获取对应index处的属性名称，以sting返回。</li>
+<li><strong>attrs.getAttributeValue</strong>来获取相应index处属性的值，以string返回。</li>
+</ol>
+<p>除了这种遍历的方法，还可以指定获取特定属性。<br>例如<strong>getAttributeIntValue</strong>方法，他接受三个参数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">public int getAttributeIntValue(String namespace, String attribute, int defaultValue);</span><br></pre></td></tr></table></figure></p>
+<p><strong>namespace</strong>代表自定义属性的命名空间，同xml种的方法，在studio工程中，自定义属性仅需要传入<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://schemas.android.com/apk/res-auto；</span><br></pre></td></tr></table></figure></p>
+<p><strong>attribute</strong>是对应属性名称，在这里是我们声明的testAttrFirst；<br><strong>defaultValue</strong>为默认值，当没有获取到xml中的数值时，就返回这个默认值。</p>
+<p>上面的代码运行后输出：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">D/CustomView-TAG: attrs get No.0 attr name: id, value: @2131492944</span><br><span class="line">D/CustomView-TAG: attrs get No.1 attr name: layout_width, value: 100.0dip</span><br><span class="line">D/CustomView-TAG: attrs get No.2 attr name: layout_height, value: 200.0dip</span><br><span class="line">D/CustomView-TAG: attrs get No.3 attr name: testAttrFirst, value: 12345</span><br><span class="line">D/CustomView-TAG: attrs get No.4 attr name: testAttrSecond, value: HelloCustomView</span><br><span class="line">D/CustomView-TAG: attrs get first value: 12345</span><br><span class="line">D/CustomView-TAG: attrs get second value: HelloCustomView</span><br><span class="line">D/CustomView-TAG: attrs count: 5</span><br></pre></td></tr></table></figure></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h3><p>1.使用TypedArray获取，需要AttributeSet与int[]两个参数，int[]数组需要与当前自定义View类型匹配，否则就无法解析出自定义属性。<br>使用TypedArray后切记不要忘记调用recycle回收。<br>2.使用AttributeSet获取需要提供自定义属性的命名空间，在studio工程中，只需要传入特殊值<code>http://schemas.android.com/apk/res-auto</code>即可。<br>获取具体属性及取值直接调用AttributeSet的接口即可。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/android/" rel="tag"># android</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2016/04/18/listview_viewholder/" rel="next" title="ListView中的ViewHolder模式及其作用">
+                  <i class="fa fa-chevron-left"></i> ListView中的ViewHolder模式及其作用
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2016/04/27/customview_animation/" rel="prev" title="自定义View中的动画">
+                  自定义View中的动画 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#自定义View的声明"><span class="nav-number">1.</span> <span class="nav-text">自定义View的声明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TypedArray获取方法"><span class="nav-number">2.</span> <span class="nav-text">TypedArray获取方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AttributeSet获取方法"><span class="nav-number">3.</span> <span class="nav-text">AttributeSet获取方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

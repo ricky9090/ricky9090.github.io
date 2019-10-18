@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="在实际的项目开发中，会大量的用到代理模式。这一设计模式又与面向切面编程(AOP)紧密相关。Java中可以通过静态代理或动态代理两种方式实现代理模式。其中静态代理容易理解，但由于需要编写大量代理类及代理方法代码，非常不利于维护；而动态代理的代理类在运行时生成，也不用编写大量重复性代码，相比静态代理有很大的优势。">
+<meta name="keywords" content="java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java中的动态代理">
+<meta property="og:url" content="https://ucx9002.github.io/2017/05/03/20170503-01/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="在实际的项目开发中，会大量的用到代理模式。这一设计模式又与面向切面编程(AOP)紧密相关。Java中可以通过静态代理或动态代理两种方式实现代理模式。其中静态代理容易理解，但由于需要编写大量代理类及代理方法代码，非常不利于维护；而动态代理的代理类在运行时生成，也不用编写大量重复性代码，相比静态代理有很大的优势。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-10-18T07:53:28.708Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java中的动态代理">
+<meta name="twitter:description" content="在实际的项目开发中，会大量的用到代理模式。这一设计模式又与面向切面编程(AOP)紧密相关。Java中可以通过静态代理或动态代理两种方式实现代理模式。其中静态代理容易理解，但由于需要编写大量代理类及代理方法代码，非常不利于维护；而动态代理的代理类在运行时生成，也不用编写大量重复性代码，相比静态代理有很大的优势。">
+  <link rel="canonical" href="https://ucx9002.github.io/2017/05/03/20170503-01/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Java中的动态代理 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2017/05/03/20170503-01/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">Java中的动态代理
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2017-05-03 15:13:51" itemprop="dateCreated datePublished" datetime="2017-05-03T15:13:51+08:00">2017-05-03</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-10-18 15:53:28" itemprop="dateModified" datetime="2019-10-18T15:53:28+08:00">2019-10-18</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在实际的项目开发中，会大量的用到代理模式。这一设计模式又与面向切面编程(AOP)紧密相关。<br>Java中可以通过静态代理或动态代理两种方式实现代理模式。其中静态代理容易理解，但由于需要编写大量代理类及代理方法代码，非常不利于维护；而动态代理的代理类在运行时生成，也不用编写大量重复性代码，相比静态代理有很大的优势。</p>
+<a id="more"></a>
+<p>动态代理涉及一个重要的接口<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">1.抽象出公共的接口类，用于代理。</span><br><span class="line">2.实现公共接口类，作为被代理的对象类。</span><br><span class="line">3.实现```InvocationHandler```接口，并与公共接口类绑定。</span><br><span class="line">4.通过```Proxy```生成动态代理的对象。</span><br><span class="line">5.通过调用代理对象的接口方法，操控被代理对象。</span><br><span class="line"></span><br><span class="line">下面通过一个例子来看看动态代理的具体实现：</span><br><span class="line">首先我们定义一个```ICar```接口，抽象出汽车的两个行为——加速```speedUp```与减速```slowDown```:</span><br><span class="line">```java</span><br><span class="line">public interface ICar &#123;</span><br><span class="line">    void speedUp();</span><br><span class="line">    void slowDown();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>接下来实现一个具体的汽车类<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">```java</span><br><span class="line">public class Benz implements ICar &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void speedUp() &#123;</span><br><span class="line">        System.out.println(&quot;Benz speedUp&quot;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void slowDown() &#123;</span><br><span class="line">        System.out.println(&quot;Benz slowDown&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>假设有这样的需求：在加速前，减速后进行纪录当前时间，记录车的时速等操作，<br>这些都与汽车加速/减速本身的机械动作(业务)无关，因此直接在<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">在这样情况下使用代理模式就可以避免侵入业务逻辑。对于动态代理的模式，在这时我们先实现```InvocationHandler```接口类：</span><br><span class="line">```java</span><br><span class="line">public class CarHandler implements InvocationHandler &#123;</span><br><span class="line"></span><br><span class="line">    private final ICar target;</span><br><span class="line"></span><br><span class="line">    public CarHandler(ICar car) &#123;</span><br><span class="line">        target = car;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable &#123;</span><br><span class="line">        if (method.getName().equals(&quot;speedUp&quot;)) &#123;</span><br><span class="line">            System.out.println(&quot;CarHandler before car speedUp&quot;);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Object result = method.invoke(target, args);</span><br><span class="line"></span><br><span class="line">        if (method.getName().equals(&quot;slowDown&quot;)) &#123;</span><br><span class="line">            System.out.println(&quot;CarHandler after car slowDown&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个类主要做了两件事情：<br>1.实现<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">这个方法中有三个参数：</span><br><span class="line">proxy是实际的代理对象，一般情况下不会使用。特别是在调用method的invoke方法时，不要传这个参数，否则代理对象执行方法还会再执行进来，直接报stackOverFlow错误……</span><br><span class="line">method代表通过代理对象调用的接口函数，例如```ICar```中的```speedUp```或```slowDown</span><br></pre></td></tr></table></figure></p>
+<p>args是调用method时传进的参数<br>2.另外一件事是通过构造方法，将被代理对象传进来。这样就可以将其传给method对象的invoke方法，来执行真实对象的相应方法了</p>
+<p>由于我们需要在加速前和减速后做有关处理，因此<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">同时```InvocationHandler```的```invoke```方法返回值应与实际调用方法返回值一致，因此将```method.invoke```的结果返回给上层。</span><br><span class="line"></span><br><span class="line">至此准备工作就完成了，下面来看如何使用这个动态代理：</span><br><span class="line">```java</span><br><span class="line">public class TestMain &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        ICar benzCar = new Benz();  // 首先生成被代理对象</span><br><span class="line">        CarHandler carHandler = new CarHandler(benzCar);  // 创建InvocationHandler对象，将被代理对象传入绑定</span><br><span class="line"></span><br><span class="line">        ICar target = (ICar) Proxy.newProxyInstance(</span><br><span class="line">                benzCar.getClass().getClassLoader(),</span><br><span class="line">                benzCar.getClass().getInterfaces(),</span><br><span class="line">                carHandler);  // 通过Proxy类的newProxyInstance静态方法，生成代理对象</span><br><span class="line"></span><br><span class="line">        target.speedUp();  // 通过代理对象进行操作</span><br><span class="line">        System.out.println();</span><br><span class="line">        target.slowDown();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1.被代理对象的ClassLoader</span><br><span class="line">2.被代理对象所实现的接口。在本例中即```ICar</span><br></pre></td></tr></table></figure>
+<p>3.<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">通过这个静态方法返回代理对象，然后再通过代理对象调用各公共接口，触发```invoke```中编写的代理逻辑。</span><br><span class="line">运行程序后输出：</span><br></pre></td></tr></table></figure></p>
+<p>CarHandler before car speedUp<br>Benz speedUp</p>
+<p>Benz slowDown<br>CarHandler after car slowDown<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">通过这个例子可以看到使用代理模式，不需要实现每个代理方法(设想ICar有100个接口的情况)。同时代理对象在运行时动态生成，提高了灵活性。</span><br><span class="line"></span><br><span class="line">这可以通过一个扩展例子体现：</span><br><span class="line">新需求要求所有接口调用时都要记录日志，便于后期追踪问题。在静态代理模式下，我们不得不为每个接口方法添加log函数，有大量重复性工作。在动态代理的模式下，可以通过定义```InvocationHandler```的公共类来解决。</span><br><span class="line"></span><br><span class="line">首先定义一个基础的```CommonHandler```类，实现代理的通用逻辑：</span><br><span class="line">```java</span><br><span class="line">public abstract class CommonHandler implements InvocationHandler &#123;</span><br><span class="line"></span><br><span class="line">    private final Object target;</span><br><span class="line"></span><br><span class="line">    public CommonHandler(Object obj) &#123;</span><br><span class="line">        target = obj;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public Object getTarget() &#123;</span><br><span class="line">        return target;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable &#123;</span><br><span class="line">        System.out.println(&quot;CommonHandler print log before method invoke&quot;);</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到在<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">另外添加了```getTarget```方法，供外部访问```target```对像，同时```target```对象修改为```Object```类型。</span><br><span class="line">接下来对```CarHandler```进行修改：</span><br><span class="line">```java</span><br><span class="line">public class CarHandler extends CommonHandler &#123;</span><br><span class="line"></span><br><span class="line">    public CarHandler(ICar car) &#123;</span><br><span class="line">        super(car);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable &#123;</span><br><span class="line">        super.invoke(proxy, method, args);</span><br><span class="line"></span><br><span class="line">        if (method.getName().equals(&quot;speedUp&quot;)) &#123;</span><br><span class="line">            System.out.println(&quot;CarHandler before car speedUp&quot;);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Object result = method.invoke(getTarget(), args);</span><br><span class="line"></span><br><span class="line">        if (method.getName().equals(&quot;slowDown&quot;)) &#123;</span><br><span class="line">            System.out.println(&quot;CarHandler after car slowDown&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">再次运行程序，输出如下：</span><br></pre></td></tr></table></figure>
+<p>CommonHandler print log before method invoke<br>CarHandler before car speedUp<br>Benz speedUp</p>
+<p>CommonHandler print log before method invoke<br>Benz slowDown<br>CarHandler after car slowDown<br><code>`</code></p>
+<p>在每个被代理的方法前都添加了日志。如果其他类型的代理对象需要这一逻辑，直接继承<code>CommonHandler</code>即可，不需要再实现同样的逻辑了。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/java/" rel="tag"># java</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2017/03/01/20170301-01/" rel="next" title="Android通讯录管理（联系人的增删改查）">
+                  <i class="fa fa-chevron-left"></i> Android通讯录管理（联系人的增删改查）
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2017/09/14/20170914-01/" rel="prev" title="Java获得范型类型Class">
+                  Java获得范型类型Class <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

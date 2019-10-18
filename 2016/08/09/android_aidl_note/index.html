@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="AIDL是实现Android中IPC的一种方式。通过AIDL我们将各种通信操作以接口方式进行定义，Android SDK则会按照AIDL的规则将AIDL编码成java类嵌入到应用中，然后我们就可以在APP运行时以调用函数的形式来进行IPC了。">
+<meta name="keywords" content="android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android中的IPC——AIDL方式">
+<meta property="og:url" content="https://ucx9002.github.io/2016/08/09/android_aidl_note/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="AIDL是实现Android中IPC的一种方式。通过AIDL我们将各种通信操作以接口方式进行定义，Android SDK则会按照AIDL的规则将AIDL编码成java类嵌入到应用中，然后我们就可以在APP运行时以调用函数的形式来进行IPC了。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://img.blog.csdn.net/20160809170813416">
+<meta property="og:image" content="http://img.blog.csdn.net/20160818233048863">
+<meta property="og:image" content="http://img.blog.csdn.net/20160818233112394">
+<meta property="og:updated_time" content="2018-06-11T08:46:43.900Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android中的IPC——AIDL方式">
+<meta name="twitter:description" content="AIDL是实现Android中IPC的一种方式。通过AIDL我们将各种通信操作以接口方式进行定义，Android SDK则会按照AIDL的规则将AIDL编码成java类嵌入到应用中，然后我们就可以在APP运行时以调用函数的形式来进行IPC了。">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20160809170813416">
+  <link rel="canonical" href="https://ucx9002.github.io/2016/08/09/android_aidl_note/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Android中的IPC——AIDL方式 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2016/08/09/android_aidl_note/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">Android中的IPC——AIDL方式
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2016-08-09 22:35:59" itemprop="dateCreated datePublished" datetime="2016-08-09T22:35:59+08:00">2016-08-09</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-06-11 16:46:43" itemprop="dateModified" datetime="2018-06-11T16:46:43+08:00">2018-06-11</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>AIDL是实现Android中IPC的一种方式。<br>通过AIDL我们将各种通信操作以接口方式进行定义，Android SDK则会按照AIDL的规则将AIDL编码成java类嵌入到应用中，然后我们就可以在APP运行时以调用函数的形式来进行IPC了。<br><a id="more"></a></p>
+<h3 id="与Messenger的区别"><a href="#与Messenger的区别" class="headerlink" title="与Messenger的区别"></a><strong>与Messenger的区别</strong></h3><p>实际Messenger进行IPC本质也是以AIDL方式实现的，只不过通过上层接口封装我们不用自己实现AIDL的接口定义。Messenger与AIDL的区别在于——<strong>由于Messenger使用Handler处理消息序列，因此Service一次仅接受一个请求，适用于单线程的IPC通讯；AIDL则可以同时处理多个请求，不过这也要求我们的Service具备多线程处理能力。</strong></p>
+<h3 id="构成"><a href="#构成" class="headerlink" title="构成"></a><strong>构成</strong></h3><p>以下表格是APP与Service中组件及说明：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right">备注</th>
+<th>APP</th>
+<th style="text-align:center">类型</th>
+<th>Service</th>
+<th style="text-align:left">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">在Service绑定回调中获取到AIDL对象</td>
+<td>onServiceConnected</td>
+<td style="text-align:center">Connection</td>
+<td>onBind</td>
+<td style="text-align:left">onBind声明周期调用时返回AIDL Stub</td>
+</tr>
+<tr>
+<td style="text-align:right">获取到AIDL对象，以调用接口</td>
+<td>AIDL</td>
+<td style="text-align:center">Variable</td>
+<td>AIDL Stub</td>
+<td style="text-align:left">实现AIDL定义的接口</td>
+</tr>
+<tr>
+<td style="text-align:right">需要与Service中定义相同</td>
+<td>AIDL定义文件</td>
+<td style="text-align:center">AIDL</td>
+<td>AIDL定义文件</td>
+<td style="text-align:left">需要与APP中定义相同</td>
+</tr>
+</tbody>
+</table>
+<p><br><br>通过图片来展现这种关系，大致为：<br><img src="http://img.blog.csdn.net/20160809170813416" alt="在APP中使用AIDL"></p>
+<h3 id="实现步骤"><a href="#实现步骤" class="headerlink" title="实现步骤"></a><strong>实现步骤</strong></h3><p>使用AIDL大致需要一下步骤：<br>1.在Service及APP工程中创建相同的AIDL文件，并定义相同接口。<br>2.在Service的onBind中返回AIDL的Stub<br>3.在APP中实现ServiceConnection，在onServiceConnected函数中调用Stub.asInterface获取到AIDL对象。<br>4.在事件响应中按需调用AIDL接口</p>
+<p>首先，我们再App与Service工程中建立相同的AIDL接口：<br>App中——<br><img src="http://img.blog.csdn.net/20160818233048863" alt="App中的AIDL"></p>
+<p>Service中——<br><img src="http://img.blog.csdn.net/20160818233112394" alt="Service中的AIDL"></p>
+<p>创建好AIDL接口后，在其中添加一个简单的函数，接收两个int值，返回两者相加：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">TestAidlInterface</span> </span>&#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Demonstrates some basic types that you can use as parameters</span></span><br><span class="line"><span class="comment">     * and return values in AIDL.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="comment">//String basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat,</span></span><br><span class="line">    <span class="comment">//        double aDouble, String aString);</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">add</span><span class="params">(<span class="keyword">int</span> alpha, <span class="keyword">int</span> beta)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Android Studio默认添加了一个函数说明在AIDL中可接受的参数类型。</p>
+<p>在定义完<code>add</code>接口后，Android Studio会触发Gradle自动生成interface的实现类，可以在build文件夹中找到：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.example.testaidlservice;</span><br><span class="line"><span class="comment">// Declare any non-default types here with import statements</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">TestAidlInterface</span> <span class="keyword">extends</span> <span class="title">android</span>.<span class="title">os</span>.<span class="title">IInterface</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line"><span class="comment">/** Local-side IPC implementation stub class. */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Stub</span> <span class="keyword">extends</span> <span class="title">android</span>.<span class="title">os</span>.<span class="title">Binder</span> <span class="keyword">implements</span> <span class="title">com</span>.<span class="title">example</span>.<span class="title">testaidlservice</span>.<span class="title">TestAidlInterface</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> java.lang.String DESCRIPTOR = <span class="string">"com.example.testaidlservice.TestAidlInterface"</span>;</span><br><span class="line"><span class="comment">/** Construct the stub at attach it to the interface. */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">Stub</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="keyword">this</span>.attachInterface(<span class="keyword">this</span>, DESCRIPTOR);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Cast an IBinder object into an com.example.testaidlservice.TestAidlInterface interface,</span></span><br><span class="line"><span class="comment"> * generating a proxy if needed.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> com.example.testaidlservice.<span class="function">TestAidlInterface <span class="title">asInterface</span><span class="params">(android.os.IBinder obj)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="keyword">if</span> ((obj==<span class="keyword">null</span>)) &#123;</span><br><span class="line"><span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br><span class="line">android.os.IInterface iin = obj.queryLocalInterface(DESCRIPTOR);</span><br><span class="line"><span class="keyword">if</span> (((iin!=<span class="keyword">null</span>)&amp;&amp;(iin <span class="keyword">instanceof</span> com.example.testaidlservice.TestAidlInterface))) &#123;</span><br><span class="line"><span class="keyword">return</span> ((com.example.testaidlservice.TestAidlInterface)iin);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> <span class="keyword">new</span> com.example.testaidlservice.TestAidlInterface.Stub.Proxy(obj);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 余下略</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>asInterface</code>即为在App中获取实现AIDL接口的Service的方法。</p>
+<p>接下来，在Service工程中创建一个Service，在其中实现AIDL的接口：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TestService</span> <span class="keyword">extends</span> <span class="title">Service</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAG = TestService.class.getSimpleName();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">TestService</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 实现AIDL接口，并在onBind中返回给App</span></span><br><span class="line">    TestAidlInterface.Stub mStub = <span class="keyword">new</span> TestAidlInterface.Stub() &#123;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">add</span><span class="params">(<span class="keyword">int</span> alpha, <span class="keyword">int</span> beta)</span> <span class="keyword">throws</span> RemoteException </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> alpha + beta;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> IBinder <span class="title">onBind</span><span class="params">(Intent intent)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// <span class="doctag">TODO:</span> Return the communication channel to the service.</span></span><br><span class="line">        Log.i(TAG, <span class="string">"testService onBind"</span>);</span><br><span class="line">        <span class="comment">// 返回AIDL接口的对象</span></span><br><span class="line">        <span class="keyword">return</span> mStub;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>然后在App工程中，启动Service，并通过<code>asInterface</code>接口获取到AIDL的实现，进一步调用：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Context mContext;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> TextView resultText;</span><br><span class="line">    <span class="keyword">private</span> Button testAddButton;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 定义AIDL接口实现类的对象</span></span><br><span class="line">    <span class="keyword">private</span> TestAidlInterface testAidl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> ServiceConnection conn = <span class="keyword">new</span> ServiceConnection() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onServiceConnected</span><span class="params">(ComponentName name, IBinder service)</span> </span>&#123;</span><br><span class="line">            <span class="comment">// onBind对象返回了AIDL的实现类，调用其中的asInterface方法来获取到可调用对象</span></span><br><span class="line">            testAidl = TestAidlInterface.Stub.asInterface(service);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onServiceDisconnected</span><span class="params">(ComponentName name)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_main);</span><br><span class="line"></span><br><span class="line">        mContext = <span class="keyword">this</span>;</span><br><span class="line"></span><br><span class="line">        resultText = (TextView) findViewById(R.id.result_text);</span><br><span class="line">        testAddButton = (Button) findViewById(R.id.test_add);</span><br><span class="line"></span><br><span class="line">        testAddButton.setOnClickListener(<span class="keyword">new</span> View.OnClickListener() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">                <span class="comment">// 判断是否需要启动Service</span></span><br><span class="line">                <span class="keyword">if</span> (testAidl == <span class="keyword">null</span>) &#123;</span><br><span class="line">                    Intent intent = <span class="keyword">new</span> Intent();</span><br><span class="line">                    intent.setAction(<span class="string">"android.intent.action.TestAidlService"</span>);</span><br><span class="line">                    intent.setPackage(<span class="string">"com.example.testaidlservice"</span>);</span><br><span class="line">                    bindService(intent, conn, Context.BIND_AUTO_CREATE);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        <span class="comment">// 调用AIDL接口获取返回值</span></span><br><span class="line">                        String result = <span class="string">"result: "</span> + testAidl.add(<span class="number">5</span>, <span class="number">8</span>);</span><br><span class="line">                        resultText.setText(result);</span><br><span class="line">                    &#125; <span class="keyword">catch</span> (RemoteException e) &#123;</span><br><span class="line">                        e.printStackTrace();</span><br><span class="line">                        Toast.makeText(MainActivity.<span class="keyword">this</span>, <span class="string">"RemoteException"</span>, Toast.LENGTH_SHORT).show();</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onBackPressed</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onBackPressed();</span><br><span class="line">        unbindService(conn);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>安装两个APP后，无需启动Service，直接运行TestAidlApp。<br>此时含有AIDL的Service尚未启动，因此第一次点击按钮，会触发启动Service，这时Service会直接在另一个进程中启动；<br>然后再次点击按钮，就可以通过获取到的AIDL对象直接运行Service中方法，并拿到返回结果显示在界面上了。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/android/" rel="tag"># android</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2016/08/06/merge_sort_note/" rel="next" title="归并排序">
+                  <i class="fa fa-chevron-left"></i> 归并排序
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2016/08/11/ios_unit_test/" rel="prev" title="iOS中异步回调的单元测试方法">
+                  iOS中异步回调的单元测试方法 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#与Messenger的区别"><span class="nav-number">1.</span> <span class="nav-text">与Messenger的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#构成"><span class="nav-number">2.</span> <span class="nav-text">构成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实现步骤"><span class="nav-number">3.</span> <span class="nav-text">实现步骤</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

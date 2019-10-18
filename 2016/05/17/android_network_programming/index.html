@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="这次简单的通过使用okhttp和node.js来实现Android与服务端交互。使用node.js作为服务端是因为其配置和开发都比较简便，在windows平台上也能很快搭建起环境；在开发Android应用时，这种快速构建的“后端”，可以用来在真正的服务端开发完成前，Mock后端数据，来验证应用网络接口的正确性。">
+<meta name="keywords" content="android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android网络编程实例">
+<meta property="og:url" content="https://ucx9002.github.io/2016/05/17/android_network_programming/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="这次简单的通过使用okhttp和node.js来实现Android与服务端交互。使用node.js作为服务端是因为其配置和开发都比较简便，在windows平台上也能很快搭建起环境；在开发Android应用时，这种快速构建的“后端”，可以用来在真正的服务端开发完成前，Mock后端数据，来验证应用网络接口的正确性。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-06-11T08:46:43.943Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android网络编程实例">
+<meta name="twitter:description" content="这次简单的通过使用okhttp和node.js来实现Android与服务端交互。使用node.js作为服务端是因为其配置和开发都比较简便，在windows平台上也能很快搭建起环境；在开发Android应用时，这种快速构建的“后端”，可以用来在真正的服务端开发完成前，Mock后端数据，来验证应用网络接口的正确性。">
+  <link rel="canonical" href="https://ucx9002.github.io/2016/05/17/android_network_programming/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Android网络编程实例 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2016/05/17/android_network_programming/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">Android网络编程实例
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2016-05-17 15:42:18" itemprop="dateCreated datePublished" datetime="2016-05-17T15:42:18+08:00">2016-05-17</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-06-11 16:46:43" itemprop="dateModified" datetime="2018-06-11T16:46:43+08:00">2018-06-11</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>这次简单的通过使用<strong>okhttp</strong>和<strong>node.js</strong>来实现Android与服务端交互。<br>使用node.js作为服务端是因为其配置和开发都比较简便，在windows平台上也能很快搭建起环境；<br>在开发Android应用时，这种快速构建的“后端”，可以用来在真正的服务端开发完成前，Mock后端数据，来验证应用网络接口的正确性。</p>
+<a id="more"></a>
+<p>node.js的安装过程很简单，在此就略过了，直接进入代码编写^_^</p>
+<p>首先来写“后端”的程序逻辑，在这里我们假设3个不同的请求响应：<br>1.返回一端普通文本<br>2.返回json数据<br>3.异常资源返回404错误<br><strong><code>testServer.js</code></strong>文件：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> http = <span class="built_in">require</span>(<span class="string">"http"</span>)</span><br><span class="line"><span class="keyword">var</span> url = <span class="built_in">require</span>(<span class="string">"url"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将请求资源封装在这个对象中，来简化不同url资源访问逻辑</span></span><br><span class="line"><span class="comment">// 借鉴自这篇教程：http://www.nodebeginner.org/index-zh-cn.html</span></span><br><span class="line"><span class="keyword">var</span> handle = &#123;&#125;</span><br><span class="line">handle[<span class="string">"/"</span>] = mainResponse</span><br><span class="line">handle[<span class="string">"/getexample"</span>] = getExampleResponse</span><br><span class="line">handle[<span class="string">"/getjsonexample"</span>] = getJsonResponse</span><br><span class="line"></span><br><span class="line"><span class="comment">// 整个后端逻辑封装到一个函数中</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">start</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">onRequest</span>(<span class="params">request, response</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> pathname = url.parse(request.url).pathname</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"pathname is: "</span> + pathname)</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (pathname == <span class="string">"/favicon.ico"</span>) &#123;    <span class="comment">// 用浏览器调试时忽略掉favicon.ico图标的请求</span></span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">typeof</span> handle[pathname] === <span class="string">"function"</span>) &#123;    <span class="comment">// 请求url与handle配置相同时，执行相应函数</span></span><br><span class="line">      handle[pathname](response)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;    <span class="comment">// 未知url资源返回404页面</span></span><br><span class="line">      response.writeHead(<span class="number">404</span>, &#123;<span class="string">"Content-Type"</span>: <span class="string">"text/plain"</span>&#125;)</span><br><span class="line">      response.write(<span class="string">"404 page not found"</span>)</span><br><span class="line">      response.end()</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  http.createServer(onRequest).listen(<span class="number">80</span>)</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">"testServer has started"</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">mainResponse</span>(<span class="params">response</span>) </span>&#123;</span><br><span class="line">  response.writeHead(<span class="number">200</span>, &#123;<span class="string">"Content-Type"</span>: <span class="string">"text/plain"</span>&#125;)</span><br><span class="line">  response.write(<span class="string">"main response from server"</span>)</span><br><span class="line">  response.end()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 访问"/getexample"时的处理</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getExampleResponse</span>(<span class="params">response</span>) </span>&#123;</span><br><span class="line">  response.writeHead(<span class="number">200</span>, &#123;<span class="string">"Content-Type"</span>: <span class="string">"text/plain"</span>&#125;)</span><br><span class="line">  response.write(<span class="string">"getExample response from server"</span>)</span><br><span class="line">  response.end()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 请求json时的处理</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getJsonResponse</span>(<span class="params">response</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> testJson = <span class="string">"&#123;"</span> +</span><br><span class="line">  <span class="string">"\"name\":\"看不见的森林\","</span> +</span><br><span class="line">  <span class="string">"\"author\":\"乔治 哈斯凯尔\","</span> +</span><br><span class="line">  <span class="string">"\"isbn\":\"9787100104685\","</span> +</span><br><span class="line">  <span class="string">"\"price\":\"46\""</span> +</span><br><span class="line">  <span class="string">"&#125;"</span></span><br><span class="line">  response.writeHead(<span class="number">200</span>, &#123;<span class="string">"Content-Type"</span>: <span class="string">"application/json;charset=utf-8"</span>&#125;)</span><br><span class="line">  response.write(testJson)</span><br><span class="line">  response.end()</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 启动服务</span></span><br><span class="line">start()</span><br></pre></td></tr></table></figure></p>
+<p>启动Node后端，在命令行输入命令：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node testServer.js</span><br></pre></td></tr></table></figure></p>
+<p>接下来编写Android app，在界面中简单添加三个按钮，分别对应“请求文本”，“请求json”，“404”三个操作。<br>在这里，网络请求使用了okhttp，通过asynctask来处理网络请求，用Gson来解析json对象：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> <span class="keyword">extends</span> <span class="title">Activity</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> Button mButton;</span><br><span class="line">    <span class="keyword">private</span> Button getJsonButton;</span><br><span class="line">    <span class="keyword">private</span> Button get404Button;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> TextView mText;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_main);</span><br><span class="line">        </span><br><span class="line">        initViews();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 初始化视图绑定点击事件</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initViews</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        mButton = (Button) findViewById(R.id.test_button);</span><br><span class="line">        getJsonButton = (Button) findViewById(R.id.get_json_button);</span><br><span class="line">        get404Button = (Button) findViewById(R.id.get_404_button);</span><br><span class="line">        mText = (TextView) findViewById(R.id.test_text);</span><br><span class="line">        </span><br><span class="line">        mButton.setOnClickListener(<span class="keyword">new</span> OnClickListener() &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">                <span class="comment">// 点击事件中启用后台线程发起请求，下同</span></span><br><span class="line">                <span class="keyword">new</span> MyAsyncTask().execute(<span class="string">"http://172.22.177.97/getexample"</span>, <span class="string">"text"</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        </span><br><span class="line">        getJsonButton.setOnClickListener(<span class="keyword">new</span> OnClickListener() &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">                <span class="keyword">new</span> MyAsyncTask().execute(<span class="string">"http://172.22.177.97/getjsonexample"</span>, <span class="string">"json"</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        </span><br><span class="line">        get404Button.setOnClickListener(<span class="keyword">new</span> OnClickListener() &#123;</span><br><span class="line">            </span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">                <span class="keyword">new</span> MyAsyncTask().execute(<span class="string">"http://172.22.177.97/404"</span>, <span class="string">"text"</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 自定义的AsyncTask类，来处理网络请求</span></span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">MyAsyncTask</span> <span class="keyword">extends</span> <span class="title">AsyncTask</span>&lt;<span class="title">String</span>, <span class="title">Integer</span>, <span class="title">String</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> String <span class="title">doInBackground</span><span class="params">(String... params)</span> </span>&#123;</span><br><span class="line">            <span class="comment">// 初始化OkHttpClient以及Resquest对象，url是传递进来的String</span></span><br><span class="line">            OkHttpClient client = <span class="keyword">new</span> OkHttpClient();</span><br><span class="line">            Request request = <span class="keyword">new</span> Request.Builder()</span><br><span class="line">                    .url(params[<span class="number">0</span>])</span><br><span class="line">                    .build();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                String extra;</span><br><span class="line">                Response res = client.newCall(request).execute();</span><br><span class="line">                </span><br><span class="line">                String bodyString = res.body().string();</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">if</span> (res.code() == <span class="number">404</span>) &#123;    <span class="comment">// 404页面</span></span><br><span class="line">                    <span class="keyword">return</span> bodyString;</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (res.code() == <span class="number">200</span>) &#123;</span><br><span class="line">                    <span class="keyword">if</span>(params[<span class="number">1</span>].equals(<span class="string">"json"</span>)) &#123;    <span class="comment">// 当请求json时，通过Gson来生成json对象</span></span><br><span class="line">                        Gson gson = <span class="keyword">new</span> Gson();</span><br><span class="line">                        Book book = gson.fromJson(bodyString, Book.class);</span><br><span class="line">                        Log.i(<span class="string">"20160905"</span>, book.toString());</span><br><span class="line">                        extra = bodyString + <span class="string">"\nobject: "</span> + book.toString();</span><br><span class="line">                        <span class="keyword">return</span> extra;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">return</span> bodyString;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">return</span> <span class="string">"response unkown"</span>;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">                <span class="keyword">return</span> <span class="string">"response exception"</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onPostExecute</span><span class="params">(String result)</span> </span>&#123;</span><br><span class="line">            mText.setText(result);</span><br><span class="line">            mText.setTextColor(Color.BLACK);</span><br><span class="line">            <span class="keyword">if</span> (result.startsWith(<span class="string">"404"</span>)) &#123;    <span class="comment">// 如果是404页面，将textView字符设定成红色</span></span><br><span class="line">                mText.setTextColor(Color.RED);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>对应json的Book类：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.example.nettest;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Book</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> String name = <span class="string">""</span>;</span><br><span class="line">    <span class="keyword">private</span> String author = <span class="string">""</span>;</span><br><span class="line">    <span class="keyword">private</span> String isbn = <span class="string">""</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> price = <span class="number">0.0f</span>;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getName</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> name;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setName</span><span class="params">(String name)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getAuthor</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> author;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setAuthor</span><span class="params">(String author)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.author = author;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getIsbn</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> isbn;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setIsbn</span><span class="params">(String isbn)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.isbn = isbn;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">float</span> <span class="title">getPrice</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> price;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setPrice</span><span class="params">(<span class="keyword">float</span> price)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.price = price;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> name + <span class="string">", "</span> + author + <span class="string">", "</span> + isbn + <span class="string">", "</span> + price;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>后续一些其他的样例可以在此基础上进行扩展。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/android/" rel="tag"># android</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2016/05/11/butterknife_diy_note/" rel="next" title="简单实现ButterKnife的注解功能">
+                  <i class="fa fa-chevron-left"></i> 简单实现ButterKnife的注解功能
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2016/05/17/runtime_permission/" rel="prev" title="Android 6.0动态权限 Runtime Permission API使用">
+                  Android 6.0动态权限 Runtime Permission API使用 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="Java很多框架或库中都会提供具有范型的回调接口或抽象类。当我们在使用时，代码类似于：1234567891011MyClient.getInstance().handleEvent(new MyCallback&amp;lt;SomeEntity&amp;gt;() &amp;#123;            @Override            public void onSuccess(SomeEntity en">
+<meta name="keywords" content="java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java获得范型类型Class">
+<meta property="og:url" content="https://ucx9002.github.io/2017/09/14/20170914-01/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="Java很多框架或库中都会提供具有范型的回调接口或抽象类。当我们在使用时，代码类似于：1234567891011MyClient.getInstance().handleEvent(new MyCallback&amp;lt;SomeEntity&amp;gt;() &amp;#123;            @Override            public void onSuccess(SomeEntity en">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-10-18T07:53:36.087Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java获得范型类型Class">
+<meta name="twitter:description" content="Java很多框架或库中都会提供具有范型的回调接口或抽象类。当我们在使用时，代码类似于：1234567891011MyClient.getInstance().handleEvent(new MyCallback&amp;lt;SomeEntity&amp;gt;() &amp;#123;            @Override            public void onSuccess(SomeEntity en">
+  <link rel="canonical" href="https://ucx9002.github.io/2017/09/14/20170914-01/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Java获得范型类型Class | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2017/09/14/20170914-01/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">Java获得范型类型Class
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2017-09-14 15:19:58" itemprop="dateCreated datePublished" datetime="2017-09-14T15:19:58+08:00">2017-09-14</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-10-18 15:53:36" itemprop="dateModified" datetime="2019-10-18T15:53:36+08:00">2019-10-18</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Java很多框架或库中都会提供具有范型的回调接口或抽象类。当我们在使用时，代码类似于：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">MyClient.getInstance().handleEvent(<span class="keyword">new</span> MyCallback&lt;SomeEntity&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onSuccess</span><span class="params">(SomeEntity entity)</span> </span>&#123;</span><br><span class="line">                System.out.println(<span class="string">"Entity is: "</span> + s);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onFailure</span><span class="params">(String errorMsg)</span> </span>&#123;</span><br><span class="line">                System.out.println(errorMsg);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br></pre></td></tr></table></figure></p>
+<a id="more"></a>
+<p>在匿名的回调类中，传入了范型类型，回调的接口中直接给出了相应类型的入参实例。<br>那么这样的功能是如何实现的呢？<br>实际是java的范型机制中，并没有把所有的范型信息擦除，通过一些反射相关的API，可以将父类的范型参数获取到。</p>
+<p>首先假定我们的Callback是抽象类方式提供的：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">MyAbstractCallback</span>&lt;<span class="title">ENTITY</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">onSuccess</span><span class="params">(ENTITY entity)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">onFailure</span><span class="params">(String errorMsg)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在这里引入了范型，当我们实现这个抽象类，就是本文最开始的形式。虽然我们的onSuccess入参类型已经是相应类型实例了，<br>但我们的“库”在回调onSuccess函数时，并没有相应的实例。因此我们需要获取到“ENTITY”对应类的class对象，并使用反射的方法生成实例，回调给上层。<br>那么handleEvent的内部应该是这样的：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;ENTITY&gt; <span class="function"><span class="keyword">void</span> <span class="title">handleEvent</span><span class="params">(MyCallback&lt;ENTITY&gt; callback)</span> </span>&#123;</span><br><span class="line">        Object obj = Class.forName(ENTITY.class.getName()).newInstance();</span><br><span class="line">        ENTITY result = (ENTITY) obj;</span><br><span class="line">        callback.onSuccess(result);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>很显然这样的写法是无法编译通过的，因为我们无法通过范型类型ENTITY直接获取到它的class，在编译期java已经将范型擦除。<br>但由于callback对象必然是抽象类的一个实现子类，因此我们虽然不能直接获取到callback实现类中的范型信息，但可以获取到父类中的范型参数来达到同样的效果，这个信息是不会被擦除的。<br>java的反射中提供了<code>getGenericSuperclass()</code>方法可以实现这个需求。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;ENTITY&gt; <span class="function"><span class="keyword">void</span> <span class="title">handleEvent</span><span class="params">(MyAbstractCallback&lt;ENTITY&gt; callback)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 单继承，父类只有一个</span></span><br><span class="line">        Type superclass = callback.getClass().getGenericSuperclass();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果实现类没有范型信息，直接返回</span></span><br><span class="line">        <span class="keyword">if</span> (!(superclass <span class="keyword">instanceof</span> ParameterizedTypeImpl)) &#123;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 找到声明的具体类型</span></span><br><span class="line">            ParameterizedType parameterized = (ParameterizedType) superclass;</span><br><span class="line">            Type actualType = parameterized.getActualTypeArguments()[<span class="number">0</span>];</span><br><span class="line"></span><br><span class="line">            Object obj = Class.forName(actualType.getTypeName()).newInstance();</span><br><span class="line">            ENTITY result = (ENTITY) obj;</span><br><span class="line">            onSuccessB(callback, result);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">            onFailureB(callback, e.getLocalizedMessage());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>整个流程可以归纳为：<br>1.通过<code>getGenericSuperclass()</code>方法获取到带有范型参数的父类信息，为Type的实例。<br>2.如果这个实例包含范型参数，那么获取到的是<code>ParameterizedTypeImpl</code>实例。<br>3.将这个Type类型实例向下强转为<code>ParameterizedType</code>类型，通过<code>getActualTypeArguments</code>方法获取到实际的类型信息（这个方法返回的是数组，因为我们定义的抽象类仅有一个范型参数，因此数组第一个元素就是我们实现时传入的类型）。<br>4.获取到类型后就可以通过反射方法生成实例，调用回调方法返回。</p>
+<p>对于接口类型的回调也同样适用，与获取父类范型参数类似，java提供了<code>getGenericInterfaces</code>方法，返回所有实现的接口。<br>如果接口是带有范型参数的，那么它同样是<code>ParameterizedTypeImpl</code>的实例。代码逻辑稍有增加，主要是因为一个类可以实现多个接口，需要在<code>getGenericInterfaces</code>返回的数组里先找到相应的接口类型。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;ENTITY&gt; <span class="function"><span class="keyword">void</span> <span class="title">handleEvent</span><span class="params">(MyCallback&lt;ENTITY&gt; callback)</span> </span>&#123;</span><br><span class="line">        Type[] interfaces = callback.getClass().getGenericInterfaces();</span><br><span class="line">        Type target = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 实际的对象可能实现了多个接口，需要从其中找到MyCallback</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; interfaces.length; i++) &#123;</span><br><span class="line">            <span class="comment">// 范型接口在数组中是ParameterizedTypeImpl类型</span></span><br><span class="line">            <span class="keyword">if</span> (interfaces[i] <span class="keyword">instanceof</span> ParameterizedTypeImpl) &#123;</span><br><span class="line">                ParameterizedTypeImpl impl = (ParameterizedTypeImpl) interfaces[i];</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (impl.getRawType().getName().equals(MyCallback.class.getName())) &#123;</span><br><span class="line">                    <span class="comment">// target就是实现了MyCallback的范型接口</span></span><br><span class="line">                    target = interfaces[i];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (target != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="comment">// 找到声明的具体类型</span></span><br><span class="line">                ParameterizedType parameterized = (ParameterizedType) target;</span><br><span class="line">                Type actualType = parameterized.getActualTypeArguments()[<span class="number">0</span>];</span><br><span class="line"></span><br><span class="line">                Object obj = Class.forName(actualType.getTypeName()).newInstance();</span><br><span class="line">                ENTITY result = (ENTITY) obj;</span><br><span class="line">                onSuccess(callback, result);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">                onFailure(callback, e.getLocalizedMessage());</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>找到接口类型后适用同样的方法拿到具体类型并反射生成实例。<br>将这两个方法封装到一个类中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyClient</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> MyClient singleInstance = <span class="keyword">new</span> MyClient();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> MyClient <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> singleInstance;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 处理接口类型的回调函数</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> callback</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> &lt;ENTITY&gt;</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> &lt;ENTITY&gt; <span class="function"><span class="keyword">void</span> <span class="title">handleEvent</span><span class="params">(MyCallback&lt;ENTITY&gt; callback)</span> </span>&#123;</span><br><span class="line">        Type[] interfaces = callback.getClass().getGenericInterfaces();</span><br><span class="line">        Type target = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 实际的对象可能实现了多个接口，需要从其中找到MyCallback</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; interfaces.length; i++) &#123;</span><br><span class="line">            <span class="comment">// 范型接口在数组中是ParameterizedTypeImpl类型</span></span><br><span class="line">            <span class="keyword">if</span> (interfaces[i] <span class="keyword">instanceof</span> ParameterizedTypeImpl) &#123;</span><br><span class="line">                ParameterizedTypeImpl impl = (ParameterizedTypeImpl) interfaces[i];</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (impl.getRawType().getName().equals(MyCallback.class.getName())) &#123;</span><br><span class="line">                    <span class="comment">// target就是实现了MyCallback的范型接口</span></span><br><span class="line">                    target = interfaces[i];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (target != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="comment">// 找到声明的具体类型</span></span><br><span class="line">                ParameterizedType parameterized = (ParameterizedType) target;</span><br><span class="line">                Type actualType = parameterized.getActualTypeArguments()[<span class="number">0</span>];</span><br><span class="line"></span><br><span class="line">                Object obj = Class.forName(actualType.getTypeName()).newInstance();</span><br><span class="line">                ENTITY result = (ENTITY) obj;</span><br><span class="line">                onSuccess(callback, result);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">                onFailure(callback, e.getLocalizedMessage());</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> &lt;ENTITY&gt; <span class="function"><span class="keyword">void</span> <span class="title">onSuccess</span><span class="params">(MyCallback&lt;ENTITY&gt; callback, ENTITY entity)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"log success"</span>);</span><br><span class="line">        callback.onSuccess(entity);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> &lt;ENTITY&gt; <span class="function"><span class="keyword">void</span> <span class="title">onFailure</span><span class="params">(MyCallback&lt;ENTITY&gt; callback, String msg)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"log failure"</span>);</span><br><span class="line">        callback.onFailure(msg);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// --------------------------------------------</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 处理类形式的回调函数</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> callback</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> &lt;ENTITY&gt;</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> &lt;ENTITY&gt; <span class="function"><span class="keyword">void</span> <span class="title">handleEvent</span><span class="params">(MyAbstractCallback&lt;ENTITY&gt; callback)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 单继承，父类只有一个</span></span><br><span class="line">        Type superclass = callback.getClass().getGenericSuperclass();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果实现类没有范型信息，直接返回</span></span><br><span class="line">        <span class="keyword">if</span> (!(superclass <span class="keyword">instanceof</span> ParameterizedTypeImpl)) &#123;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 找到声明的具体类型</span></span><br><span class="line">            ParameterizedType parameterized = (ParameterizedType) superclass;</span><br><span class="line">            Type actualType = parameterized.getActualTypeArguments()[<span class="number">0</span>];</span><br><span class="line"></span><br><span class="line">            Object obj = Class.forName(actualType.getTypeName()).newInstance();</span><br><span class="line">            ENTITY result = (ENTITY) obj;</span><br><span class="line">            onSuccessB(callback, result);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">            onFailureB(callback, e.getLocalizedMessage());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> &lt;ENTITY&gt; <span class="function"><span class="keyword">void</span> <span class="title">onSuccessB</span><span class="params">(MyAbstractCallback&lt;ENTITY&gt; callback, ENTITY entity)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"log success"</span>);</span><br><span class="line">        callback.onSuccess(entity);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> &lt;ENTITY&gt; <span class="function"><span class="keyword">void</span> <span class="title">onFailureB</span><span class="params">(MyAbstractCallback&lt;ENTITY&gt; callback, String msg)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"log failure"</span>);</span><br><span class="line">        callback.onFailure(msg);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来可以写一些测试代码，可以通过修改构造函数参数数量，触发反射生成实例报错走onFailure的逻辑。这里由于反射仅生成了实例没有设置参数，所有的打印都是空值：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TestMain</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> String name;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 打开用来测试newInstance报错走onFailure</span></span><br><span class="line">    <span class="comment">/*public TestMain(String name) &#123;</span></span><br><span class="line"><span class="comment">        this.name = name;</span></span><br><span class="line"><span class="comment">    &#125;*/</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getName</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> name;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setName</span><span class="params">(String name)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">printTestMainName</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Name of TestMain is: "</span> + <span class="keyword">this</span>.name);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        MyClient.getInstance().handleEvent(<span class="keyword">new</span> MyTestCallback());</span><br><span class="line"></span><br><span class="line">        MyClient.getInstance().handleEvent(<span class="keyword">new</span> MyCallback&lt;String&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onSuccess</span><span class="params">(String s)</span> </span>&#123;</span><br><span class="line">                System.out.println(<span class="string">"String is: "</span> + s);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onFailure</span><span class="params">(String errorMsg)</span> </span>&#123;</span><br><span class="line">                System.out.println(errorMsg);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">        MyClient.getInstance().handleEvent(<span class="keyword">new</span> AnotherCallback());</span><br><span class="line"></span><br><span class="line">        MyClient.getInstance().handleEvent(<span class="keyword">new</span> MyAbstractCallback&lt;String&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">void</span> <span class="title">onSuccess</span><span class="params">(String s)</span> </span>&#123;</span><br><span class="line">                System.out.println(<span class="string">"String is: "</span> + s);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">void</span> <span class="title">onFailure</span><span class="params">(String errorMsg)</span> </span>&#123;</span><br><span class="line">                System.out.println(errorMsg);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>前两个方法是接口实现类的调用，后两个方法是抽象类的实现类调用。同时第一个测试方法传入的是事先定义好的实现类，第二次传入了匿名实现类。</p>
+<p>接口与抽象类的定义：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">MyCallback</span>&lt;<span class="title">ENTITY</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">onSuccess</span><span class="params">(ENTITY entity)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">onFailure</span><span class="params">(String errorMsg)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">MyAbstractCallback</span>&lt;<span class="title">ENTITY</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">onSuccess</span><span class="params">(ENTITY entity)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">onFailure</span><span class="params">(String errorMsg)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>接口实现类与抽象类的实现类(这里主要测试了实现多个接口时的处理逻辑)：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyTestCallback</span> <span class="keyword">implements</span> <span class="title">MyCallback</span>&lt;<span class="title">TestMain</span>&gt;, <span class="title">FooInterface</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">foo</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onSuccess</span><span class="params">(TestMain o)</span> </span>&#123;</span><br><span class="line">        o.printTestMainName();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onFailure</span><span class="params">(String errorMsg)</span> </span>&#123;</span><br><span class="line">        System.out.println(errorMsg);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AnotherCallback</span> <span class="keyword">extends</span> <span class="title">MyAbstractCallback</span>&lt;<span class="title">TestMain</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">onSuccess</span><span class="params">(TestMain testMain)</span> </span>&#123;</span><br><span class="line">        testMain.printTestMainName();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">onFailure</span><span class="params">(String errorMsg)</span> </span>&#123;</span><br><span class="line">        System.out.println(errorMsg);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/java/" rel="tag"># java</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2017/05/03/20170503-01/" rel="next" title="Java中的动态代理">
+                  <i class="fa fa-chevron-left"></i> Java中的动态代理
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2017/11/14/20171114-01/" rel="prev" title="Kotlin中的构造函数">
+                  Kotlin中的构造函数 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

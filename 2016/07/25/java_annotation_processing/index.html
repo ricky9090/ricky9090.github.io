@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="在之前的《简单实现ButterKnife的注解功能》中，使用了运行时的注解实现了通过编写注解绑定View与xml。由于运行时注解需要在Activity初始化中进行绑定操作，调用了大量反射相关代码，在界面复杂的情况下，使用这种方法就会严重影响Activity初始化效率。而ButterKnife使用了更高效的方式——Annotation Processor来完成这一工作。">
+<meta name="keywords" content="java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java中实现自定义的注解处理器">
+<meta property="og:url" content="https://ucx9002.github.io/2016/07/25/java_annotation_processing/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="在之前的《简单实现ButterKnife的注解功能》中，使用了运行时的注解实现了通过编写注解绑定View与xml。由于运行时注解需要在Activity初始化中进行绑定操作，调用了大量反射相关代码，在界面复杂的情况下，使用这种方法就会严重影响Activity初始化效率。而ButterKnife使用了更高效的方式——Annotation Processor来完成这一工作。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://img.blog.csdn.net/20160725170902811">
+<meta property="og:image" content="http://img.blog.csdn.net/20160725170931654">
+<meta property="og:image" content="http://img.blog.csdn.net/20160725171017796">
+<meta property="og:image" content="http://img.blog.csdn.net/20160725171127656">
+<meta property="og:updated_time" content="2018-06-11T08:46:44.011Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java中实现自定义的注解处理器">
+<meta name="twitter:description" content="在之前的《简单实现ButterKnife的注解功能》中，使用了运行时的注解实现了通过编写注解绑定View与xml。由于运行时注解需要在Activity初始化中进行绑定操作，调用了大量反射相关代码，在界面复杂的情况下，使用这种方法就会严重影响Activity初始化效率。而ButterKnife使用了更高效的方式——Annotation Processor来完成这一工作。">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20160725170902811">
+  <link rel="canonical" href="https://ucx9002.github.io/2016/07/25/java_annotation_processing/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Java中实现自定义的注解处理器 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2016/07/25/java_annotation_processing/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">Java中实现自定义的注解处理器
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2016-07-25 19:42:00" itemprop="dateCreated datePublished" datetime="2016-07-25T19:42:00+08:00">2016-07-25</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-06-11 16:46:44" itemprop="dateModified" datetime="2018-06-11T16:46:44+08:00">2018-06-11</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在之前的《<a href="http://blog.csdn.net/ucxiii/article/details/51376514" target="_blank" rel="noopener">简单实现ButterKnife的注解功能</a>》中，使用了运行时的注解实现了通过编写注解绑定View与xml。由于运行时注解需要在Activity初始化中进行绑定操作，调用了大量反射相关代码，在界面复杂的情况下，使用这种方法就会严重影响Activity初始化效率。而ButterKnife使用了更高效的方式——<strong>Annotation Processor</strong>来完成这一工作。</p>
+<a id="more"></a>
+<p><strong>Annotation Processor</strong>即为注解的处理器。与运行时注解<code>RetentionPolicy.RUNTIME</code>不同，Annotation Processor处理<code>RetentionPolicy.SOURCE</code>类型的注解。在java代码编译阶段对标注<code>RetentionPolicy.SOURCE</code>类型的注解进行处理。这样在编译过程中添加代码，效率就非常高了。同样，Annotation Processor也可以实现IDE编写代码时的各种代码检验，例如当你在一个并未覆写任何父类方法的函数上添加了<code>@Override</code>注解，IDE会红线标识出你的函数提示错误。</p>
+<h2 id="实现步骤"><a href="#实现步骤" class="headerlink" title="实现步骤"></a><strong>实现步骤</strong></h2><p>使用Annotation Processor需要实现<code>AbstraceProcessor</code>这个抽象类，并配置工程引用这个Processor。<br>以下从Gradle编译工程及Eclipse中配置两方面介绍如何自定义并使用Annotation Processor。</p>
+<p><strong>Gradle编译环境：</strong><br>1.实现Annotation Processor<br>2.配置Processor工程的META_INF文件<br>3.在开发的代码中使用自定义注解<br>4.配置gradle编译脚本，引入processor工程<br>5.进行项目构建，查看processor输出</p>
+<p><strong>Eclipse环境：</strong><br>1.将Gradle环境编译出的processor.jar作为库引入到工程中<br>2.配置当前工程支持Annotation Processor，并使用自定义的processor.jar文件<br>3.开发代码使用自定义注解，查看IDE上提示信息</p>
+<p>*IDEA环境的配置与Eclipse类似，官网上已经有比较详细的描述了，可以查阅Jetbrain的官方文档。</p>
+<h2 id="Gradle环境"><a href="#Gradle环境" class="headerlink" title="Gradle环境"></a><strong>Gradle环境</strong></h2><h3 id="构建工程目录"><a href="#构建工程目录" class="headerlink" title="构建工程目录"></a><strong>构建工程目录</strong></h3><p>先来看一下processor工程的构建。<br>假设在HelloWorld工程中使用自定义的processor；独立于HelloWorld工程，我们独立开发了自定义的processor工程。项目结构如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">MyProcessorTest</span><br><span class="line">│          </span><br><span class="line">├─MyProcessor</span><br><span class="line">│  │  </span><br><span class="line">│  └─src</span><br><span class="line">│      └─main</span><br><span class="line">│          └─java</span><br><span class="line">│             └─com</span><br><span class="line">│                 └─processor</span><br><span class="line">│                         MyProcessor.java</span><br><span class="line">│                         TestAnnotation.java</span><br><span class="line">│                          </span><br><span class="line">└─src</span><br><span class="line">    └─main</span><br><span class="line">        └─java</span><br><span class="line">            └─com</span><br><span class="line">                └─hello</span><br><span class="line">                        HelloWorld.java</span><br></pre></td></tr></table></figure></p>
+<p>主工程名为<code>MyProcessorTest</code>，在其中包含了processor工程<code>MyProcessor</code>。</p>
+<h3 id="实现自定义注解"><a href="#实现自定义注解" class="headerlink" title="实现自定义注解"></a><strong>实现自定义注解</strong></h3><p>接下来实现一个自定义注解<code>TestAnnotation</code>：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.processor;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.lang.annotation.ElementType;</span><br><span class="line"><span class="keyword">import</span> java.lang.annotation.Retention;</span><br><span class="line"><span class="keyword">import</span> java.lang.annotation.RetentionPolicy;</span><br><span class="line"><span class="keyword">import</span> java.lang.annotation.Target;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Target</span>(ElementType.FIELD)</span><br><span class="line"><span class="meta">@Retention</span>(RetentionPolicy.SOURCE)</span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> TestAnnotation &#123;</span><br><span class="line">	<span class="function"><span class="keyword">int</span> <span class="title">value</span><span class="params">()</span></span>;</span><br><span class="line">	<span class="function">String <span class="title">what</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>注意注解的Retention是<code>RetentionPolicy.SOURCE</code>类型。</p>
+<h3 id="创建自定义Annotation-Processor"><a href="#创建自定义Annotation-Processor" class="headerlink" title="创建自定义Annotation Processor"></a><strong>创建自定义Annotation Processor</strong></h3><p>然后来实现自定义的Annotation Processor——<code>MyProcessor</code><br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.processor;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.Set;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.annotation.processing.AbstractProcessor;</span><br><span class="line"><span class="keyword">import</span> javax.annotation.processing.RoundEnvironment;</span><br><span class="line"><span class="keyword">import</span> javax.annotation.processing.SupportedAnnotationTypes;</span><br><span class="line"><span class="keyword">import</span> javax.annotation.processing.SupportedSourceVersion;</span><br><span class="line"><span class="keyword">import</span> javax.lang.model.SourceVersion;</span><br><span class="line"><span class="keyword">import</span> javax.lang.model.element.TypeElement;</span><br><span class="line"></span><br><span class="line"><span class="meta">@SupportedAnnotationTypes</span>(&#123;<span class="string">"com.processor.TestAnnotation"</span>&#125;)</span><br><span class="line"><span class="meta">@SupportedSourceVersion</span>(SourceVersion.RELEASE_7)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyProcessor</span> <span class="keyword">extends</span> <span class="title">AbstractProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">process</span><span class="params">(Set&lt;? extends TypeElement&gt; annotations, RoundEnvironment roundEnv)</span> </span>&#123;</span><br><span class="line">		System.out.println(<span class="string">"Test log in MyProcessor.process"</span>);</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中几个要点：<br>1.自定义Annotation Processor需要继承<strong>AbstractProcessor</strong>，并覆写<code>process</code>方法。<br>2.需要声明此Processor所支持处理的注解类<br><code>@SupportedAnnotationTypes({&quot;com.processor.TestAnnotation&quot;})</code><br>（类名需要已字符串形式填入包名+类名，否则不起作用）<br>3.需要声明注解作用的java版本，由于我的工程默认使用了JDK 7进行编译，因此需要填写<br><code>@SupportedSourceVersion(SourceVersion.RELEASE_7)</code></p>
+<p>目前自定义的Processor仅打印了一条log，如果成功的话，会在命令行编译时看到这条打印。<br>由于自定义Processor类最终是通过打包成jar，在编译过程中调用的。为了让java编译器识别出这个自定义的Processor，需要配置<strong>META-INF</strong>中的文件，将这个自定义的类名注册进去。<br><code>javax.annotation.processing.Processor</code>文件：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">com.processor.MyProcessor</span><br></pre></td></tr></table></figure></p>
+<p>添加完META-INF后的<code>MyProcessor</code>工程结构如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">├─MyProcessor</span><br><span class="line">│  │  </span><br><span class="line">│  └─src</span><br><span class="line">│      └─main</span><br><span class="line">│          ├─java</span><br><span class="line">│          │  └─com</span><br><span class="line">│          │      └─processor</span><br><span class="line">│          │              MyProcessor.java</span><br><span class="line">│          │              TestAnnotation.java</span><br><span class="line">│          │              </span><br><span class="line">│          └─resources</span><br><span class="line">│              └─META-INF</span><br><span class="line">│                  └─services</span><br><span class="line">│                          javax.annotation.processing.Processor</span><br></pre></td></tr></table></figure></p>
+<p>这样自定义Processor的基本雏形就完成了。</p>
+<h3 id="引用自定义注解"><a href="#引用自定义注解" class="headerlink" title="引用自定义注解"></a><strong>引用自定义注解</strong></h3><p>接下来编写HelloWorld类，引入自定义注解：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.hello;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> com.processor.TestAnnotation;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HelloWorld</span> </span>&#123;</span><br><span class="line">	</span><br><span class="line">	<span class="meta">@TestAnnotation</span>(value = <span class="number">5</span>, what = <span class="string">"This is a test"</span>)</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> String msg = <span class="string">"Hello world!"</span>;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">		System.out.println(msg);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在变量<code>msg</code>上使用了注解。</p>
+<h3 id="配置Gradle编译环境"><a href="#配置Gradle编译环境" class="headerlink" title="配置Gradle编译环境"></a><strong>配置Gradle编译环境</strong></h3><p>下面来配置Gradle编译环境。<br>首先可以从一个Android工程里拷贝一份Gradle Wrapper到工程目录下（gradlew, gradlew.bat, 以及gradle目录），这时的工程结构（仅根目录下及gradle有关子目录）：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">│  gradlew</span><br><span class="line">│  gradlew.bat</span><br><span class="line">│              </span><br><span class="line">├─gradle</span><br><span class="line">│  └─wrapper</span><br><span class="line">│          gradle-wrapper.jar</span><br><span class="line">│          gradle-wrapper.properties</span><br><span class="line">│          </span><br><span class="line">├─MyProcessor</span><br><span class="line">│  └─src</span><br><span class="line">│                      </span><br><span class="line">└─src</span><br><span class="line">    └─main</span><br></pre></td></tr></table></figure></p>
+<p>此时还没有<code>build.gradle</code>和<code>settings.gradle</code>文件，因为我们有了gradle wrapper，因此可以通过它来自动生成这两个文件。执行命令<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gradlew.bat init</span><br></pre></td></tr></table></figure></p>
+<p>这样就生成默认的gradle配置文件了。接下来修改两个配置文件。<br>首先在settings.gradle中添加processor工程，以便在根目录下直接编译两个工程，以及后续的依赖配置。<br><code>settings.gradle</code>：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">rootProject.name = &apos;MyProcessorTest&apos;</span><br><span class="line">include &apos;MyProcessor&apos;</span><br></pre></td></tr></table></figure></p>
+<p>然后在build.gradle中声明依赖，以便HelloWorld中自定义注解的处理以及processor的引用<br><code>build.gradle</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">apply plugin: &apos;java&apos;</span><br><span class="line"></span><br><span class="line">dependencies &#123;</span><br><span class="line">    compile project(&apos;MyProcessor&apos;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>上面的操作仅配置了根目录下的gradle配置，但<code>MyProcessor</code>中还没有配置。在<code>MyProcessor</code>的根目录下新建一个build.gradle即可：<br><code>build.gradle</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apply plugin: &apos;java&apos;</span><br></pre></td></tr></table></figure></p>
+<h3 id="执行自定义Processor"><a href="#执行自定义Processor" class="headerlink" title="执行自定义Processor"></a><strong>执行自定义Processor</strong></h3><p>接下来就可以编译项目了，在根目录下执行<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gradlew.bat assemble</span><br></pre></td></tr></table></figure></p>
+<p>输出log：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">Executing command: &quot;:assemble&quot;</span><br><span class="line">:MyProcessor:compileJava UP-TO-DATE</span><br><span class="line">:MyProcessor:processResources UP-TO-DATE</span><br><span class="line">:MyProcessor:classes UP-TO-DATE</span><br><span class="line">:MyProcessor:jar UP-TO-DATE</span><br><span class="line">:compileJava</span><br><span class="line">Test log in MyProcessor.process</span><br><span class="line">Test log in MyProcessor.process</span><br><span class="line">:processResources UP-TO-DATE</span><br><span class="line">:classes</span><br><span class="line">:jar</span><br><span class="line">:assemble</span><br><span class="line"></span><br><span class="line">BUILD SUCCESSFUL</span><br><span class="line"></span><br><span class="line">Total time: 7.353 secs</span><br><span class="line"></span><br><span class="line">Completed Successfully</span><br></pre></td></tr></table></figure></p>
+<p>可以看到已经输出了<code>Test log in MyProcessor.process</code>，证明自定义的processor已经起作用了！<br>但是这里为何输出两次log？<br>在代码中添加几行调用：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">process</span><span class="params">(Set&lt;? extends TypeElement&gt; annotations, RoundEnvironment roundEnv)</span> </span>&#123;</span><br><span class="line">	System.out.println(<span class="string">"Test log in MyProcessor.process"</span>);</span><br><span class="line">	System.out.println(roundEnv.toString());    <span class="comment">//打印传入的roundEvn对象信息</span></span><br><span class="line">	<span class="keyword">for</span> (TypeElement element : annotations) &#123;</span><br><span class="line">		System.out.println(element.getSimpleName());    <span class="comment">//遍历annotation，打印出注解类型</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>再次运行log输出：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Compiling with JDK Java compiler API.</span><br><span class="line">Test log in MyProcessor.process</span><br><span class="line">[errorRaised=false, rootElements=[com.hello.HelloWorld], processingOver=false]</span><br><span class="line">TestAnnotation</span><br><span class="line">Test log in MyProcessor.process</span><br><span class="line">[errorRaised=false, rootElements=[], processingOver=true]</span><br><span class="line">:compileJava (Thread[main,5,main]) completed. Took 0.249 secs.</span><br></pre></td></tr></table></figure></p>
+<p>可以看出仅在第一次process处理了<code>TestAnnotation</code>注解，第二次并没有遍历到；并且processingOver状态不同。这里的具体流程还没搞懂，先略过……</p>
+<h3 id="添加注解处理及信息提示"><a href="#添加注解处理及信息提示" class="headerlink" title="添加注解处理及信息提示"></a><strong>添加注解处理及信息提示</strong></h3><p>最后一步，就要为注解程序添加真正的处理功能了。直接放代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SupportedAnnotationTypes</span>(&#123;<span class="string">"com.processor.TestAnnotation"</span>&#125;)</span><br><span class="line"><span class="meta">@SupportedSourceVersion</span>(SourceVersion.RELEASE_7)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyProcessor</span> <span class="keyword">extends</span> <span class="title">AbstractProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">process</span><span class="params">(Set&lt;? extends TypeElement&gt; annotations, RoundEnvironment roundEnv)</span> </span>&#123;</span><br><span class="line">		System.out.println(<span class="string">"Test log in MyProcessor.process"</span>);</span><br><span class="line">		System.out.println(roundEnv.toString());</span><br><span class="line">		</span><br><span class="line">		<span class="keyword">for</span> (TypeElement typeElement : annotations) &#123;    <span class="comment">// 遍历annotations获取annotation类型</span></span><br><span class="line">			<span class="keyword">for</span> (Element element : roundEnv.getElementsAnnotatedWith(typeElement)) &#123;    <span class="comment">// 使用roundEnv.getElementsAnnotatedWith获取所有被某一类型注解标注的元素，依次遍历</span></span><br><span class="line">				<span class="comment">// 在元素上调用接口获取注解值</span></span><br><span class="line">				<span class="keyword">int</span> annoValue = element.getAnnotation(TestAnnotation.class).value();</span><br><span class="line">				String annoWhat = element.getAnnotation(TestAnnotation.class).what();</span><br><span class="line">				</span><br><span class="line">				System.out.println(<span class="string">"value = "</span> + annoValue);</span><br><span class="line">				System.out.println(<span class="string">"what = "</span> + annoWhat);</span><br><span class="line">				</span><br><span class="line">				<span class="comment">// 向当前环境输出warning信息</span></span><br><span class="line">				processingEnv.getMessager().printMessage(Kind.WARNING, <span class="string">"value = "</span> + annoValue + <span class="string">", what = "</span> + annoWhat, element);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这次仅运行<code>gradlew.bat compileJava</code>：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Executing command: &quot;:compileJava&quot;</span><br><span class="line">:MyProcessor:compileJava</span><br><span class="line">:MyProcessor:processResources UP-TO-DATE</span><br><span class="line">:MyProcessor:classes</span><br><span class="line">:MyProcessor:jar</span><br><span class="line">:compileJava</span><br><span class="line">Test log in MyProcessor.process</span><br><span class="line">[errorRaised=false, rootElements=[com.hello.HelloWorld], processingOver=false]</span><br><span class="line">D:\test\MyProcessorTest\src\main\java\com\hello\HelloWorld.java:8: 警告: value = 5, what = This is a test</span><br><span class="line">	public static String msg = &quot;Hello world!&quot;;</span><br><span class="line">	                     ^</span><br><span class="line">1 个警告</span><br><span class="line">value = 5</span><br><span class="line">what = This is a test</span><br><span class="line">Test log in MyProcessor.process</span><br><span class="line">[errorRaised=false, rootElements=[], processingOver=true]</span><br><span class="line"></span><br><span class="line">BUILD SUCCESSFUL</span><br><span class="line"></span><br><span class="line">Total time: 9.048 secs</span><br><span class="line"></span><br><span class="line">Completed Successfully</span><br></pre></td></tr></table></figure></p>
+<p>自定义processor已经起作用了。最后的<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">processingEnv.getMessager().printMessage(Kind.WARNING, &quot;value = &quot; + annoValue + &quot;, what = &quot; + annoWhat, element);</span><br></pre></td></tr></table></figure></p>
+<p>在命令行环境中抛出了warning。<br>实际<code>processingEnv</code>不仅可以作用于命令行，对IDE同一样生效。</p>
+<h2 id="Eclipse环境配置"><a href="#Eclipse环境配置" class="headerlink" title="Eclipse环境配置"></a><strong>Eclipse环境配置</strong></h2><p>下面再看看目前编译好的Processor如何在Eclipse环境中生效。</p>
+<p>在网上搜索到Eclipse官方文档：<br><br><br><a href="http://www.eclipse.org/jdt/apt/introToAPT.php" target="_blank" rel="noopener">Introduction to Annotation Processing in Eclipse</a><br><br><br>介绍了如何配置Eclipse工程来支持注解处理器。</p>
+<p>步骤如下：<br>1.在当前工程中开启Annotation Processing。<br>通过工程属性，开启Java Compiler-&gt;Annotation Processing中的选项；<br><br><br><img src="http://img.blog.csdn.net/20160725170902811" alt="开启Annotation"><br><br><br>开启Annotation</p>
+<hr>
+<p>继续设置Java Compiler-&gt;Annotation Processing -&gt; Factory Path，导入自定义Processer的jar文件（导入刚刚编译出的MyProcessor.jar）。<br><br><br><img src="http://img.blog.csdn.net/20160725170931654" alt="使用自定义的Processor"><br><br><br>使用自定义的Processor</p>
+<hr>
+<p>2.在代码中引用注解，显示自定义Processor中的提示信息：<br><br><br><img src="http://img.blog.csdn.net/20160725171017796" alt="显示Processor中的警告"><br><br><br>显示Processor中的警告</p>
+<hr>
+<p>这时Eclipse中的工程结构：<br><br><br><img src="http://img.blog.csdn.net/20160725171127656" alt="工程结构"><br><br><br>Eclipse的官方文档中给了一个验证用的<strong>APTDemo.jar</strong>。实际反编译后可以看到jar中使用了Java 5的注解处理器API实现的功能（包名还是sun的）。<br>而在上面的样例代码中，使用的是Java 6中的API实现的。</p>
+<p>另外在Eclipse的官方文档：<br><br><br><a href="http://help.eclipse.org/neon/index.jsp" target="_blank" rel="noopener">Eclipse官方文档</a><br><br><br>JDT Plug-in Developer Guide &gt; Programmer’s Guide &gt; JDT Annotation Processing<br>一节中，说道：</p>
+<blockquote>
+<p>Eclipse 3.2 provided support for annotation processors using the Java 5 Mirror APIs, and Eclipse 3.3 added support for processors using the Java 6 annotation processing APIs.</p>
+</blockquote>
+<p>也就是以上的方法对Eclipse 3.3以上版本有效。<br>同时还有：</p>
+<blockquote>
+<p>Eclipse does not support executing Java 6 processors while typing in the editor; you must save and build in order for Java 6 processors to report errors or generate files.</p>
+</blockquote>
+<p>然而至少通过Mars版本（4.5.2）的Eclipse，是可以在编辑器中看到warning信息的，有可能是文档这里仍没有更新……</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/java/" rel="tag"># java</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2016/07/20/service_intent_error/" rel="next" title="Service Intent must be explicit错误">
+                  <i class="fa fa-chevron-left"></i> Service Intent must be explicit错误
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2016/08/02/android_source_error/" rel="prev" title="MacOS下编译Android源码报错：Can not find SDK 10.6 at">
+                  MacOS下编译Android源码报错：Can not find SDK 10.6 at <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#实现步骤"><span class="nav-number">1.</span> <span class="nav-text">实现步骤</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Gradle环境"><span class="nav-number">2.</span> <span class="nav-text">Gradle环境</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#构建工程目录"><span class="nav-number">2.1.</span> <span class="nav-text">构建工程目录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实现自定义注解"><span class="nav-number">2.2.</span> <span class="nav-text">实现自定义注解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建自定义Annotation-Processor"><span class="nav-number">2.3.</span> <span class="nav-text">创建自定义Annotation Processor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#引用自定义注解"><span class="nav-number">2.4.</span> <span class="nav-text">引用自定义注解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置Gradle编译环境"><span class="nav-number">2.5.</span> <span class="nav-text">配置Gradle编译环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行自定义Processor"><span class="nav-number">2.6.</span> <span class="nav-text">执行自定义Processor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#添加注解处理及信息提示"><span class="nav-number">2.7.</span> <span class="nav-text">添加注解处理及信息提示</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Eclipse环境配置"><span class="nav-number">3.</span> <span class="nav-text">Eclipse环境配置</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

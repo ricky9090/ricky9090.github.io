@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="归并排序的步骤就是分组-&amp;gt;合并，这两步均是递归进行，直到所操作的子组仅有一个元素为止。">
+<meta name="keywords" content="algorithm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="归并排序">
+<meta property="og:url" content="https://ucx9002.github.io/2016/08/06/merge_sort_note/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="归并排序的步骤就是分组-&amp;gt;合并，这两步均是递归进行，直到所操作的子组仅有一个元素为止。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-06-11T08:46:44.043Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="归并排序">
+<meta name="twitter:description" content="归并排序的步骤就是分组-&amp;gt;合并，这两步均是递归进行，直到所操作的子组仅有一个元素为止。">
+  <link rel="canonical" href="https://ucx9002.github.io/2016/08/06/merge_sort_note/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>归并排序 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2016/08/06/merge_sort_note/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">归并排序
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2016-08-06 14:31:33" itemprop="dateCreated datePublished" datetime="2016-08-06T14:31:33+08:00">2016-08-06</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-06-11 16:46:44" itemprop="dateModified" datetime="2018-06-11T16:46:44+08:00">2018-06-11</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>归并排序的步骤就是分组-&gt;合并，这两步均是递归进行，直到所操作的子组仅有一个元素为止。</p>
+<a id="more"></a>
+<p>例如一个数组：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">6, 3, 1, 9, 2, 7, 4, 5</span><br></pre></td></tr></table></figure></p>
+<p>首先分成两组：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[6, 3, 1, 9] [2, 7, 4, 5]</span><br></pre></td></tr></table></figure></p>
+<p>对于左边，再次分组：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[6, 3] [1, 9]</span><br></pre></td></tr></table></figure></p>
+<p>再对左边分组：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[6] [3]</span><br></pre></td></tr></table></figure></p>
+<p>因为各自仅包含一个元素了，这一个元素组成的字数组就是有序的了。接下来向上递归合并：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[6] [3] -&gt; [3, 6]</span><br><span class="line">[1] [9] -&gt; [1, 9]</span><br><span class="line">[3, 6] [1, 9] -&gt; [1, 3, 6, 9]</span><br></pre></td></tr></table></figure></p>
+<p>对于右半边子数组同样：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[2, 4, 5, 7]</span><br></pre></td></tr></table></figure></p>
+<p>最后再合并：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[1, 3, 6, 9] [2, 4, 5, 7] -&gt; [1, 2, 3, 4, 5, 7, 9]</span><br></pre></td></tr></table></figure></p>
+<p>分组的过程比较简单，直接将数组拆成两部分即可。</p>
+<p>合并时，需要交替比较两个数组间的元素，由于合并时，两个子数组均已经排序好了，因此两个数组从头至尾遍历一次即可。<br>从一个数组A开始，当其中元素开始大于另一数组B的元素时，就停止遍历A，开始遍历B中的元素，当B元素开始比A中的大时，反之继续。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[(1), 3, 6, 9] [&lt;2&gt;, 4, 5, 7] -&gt; [1, _, _, _, _, _, _, _]</span><br><span class="line">[1, &lt;3&gt;, 6, 9] [(2), 4, 5, 7] -&gt; [1, 2, _, _, _, _, _, _]</span><br><span class="line">[1, (3), 6, 9] [2, &lt;4&gt;, 5, 7] -&gt; [1, 2, 3, _, _, _, _, _]</span><br><span class="line">[1, 3, &lt;6&gt;, 9] [2, (4), 5, 7] -&gt; [1, 2, 3, 4, _, _, _, _]</span><br><span class="line">[1, 3, &lt;6&gt;, 9] [2, 4, (5), 7] -&gt; [1, 2, 3, 4, 5, _, _, _]</span><br><span class="line">[1, 3, (6), 9] [2, 4, 5, &lt;7&gt;] -&gt; [1, 2, 3, 4, 5, 6, _, _]</span><br><span class="line">[1, 3, 6, &lt;9&gt;] [2, 4, 5, (7)] -&gt; [1, 2, 3, 4, 5, 6, 7, _]</span><br><span class="line">[1, 3, 6, &lt;9&gt;] [2, 4, 5, 7]() -&gt; [1, 2, 3, 4, 5, 6, 7, 9]</span><br></pre></td></tr></table></figure></p>
+<p>以下是Java版本代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.example.mergesort;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MergeSort</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * 顶层的接口，用于外部调用</span></span><br><span class="line"><span class="comment">	 * */</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sortA</span><span class="params">(<span class="keyword">int</span>[] arrayToSort)</span> </span>&#123;</span><br><span class="line">		</span><br><span class="line">		<span class="keyword">int</span> leftIndexStart;</span><br><span class="line">		<span class="keyword">int</span> leftIndexEnd;</span><br><span class="line">		<span class="keyword">int</span> rightIndexStart;</span><br><span class="line">		<span class="keyword">int</span> rightIndexEnd;</span><br><span class="line"></span><br><span class="line">		<span class="comment">//  在本例中，顶层接口不做数组大小判断了。在此直接获取各下标参数</span></span><br><span class="line">		<span class="keyword">int</span> midIndex = arrayToSort.length / <span class="number">2</span>;</span><br><span class="line">		leftIndexStart = <span class="number">0</span>;</span><br><span class="line">		leftIndexEnd = midIndex;</span><br><span class="line">		rightIndexStart = midIndex + <span class="number">1</span>;</span><br><span class="line">		rightIndexEnd = arrayToSort.length - <span class="number">1</span>;</span><br><span class="line">		</span><br><span class="line">		<span class="comment">// 声明一个与原数组一样大小的空组，用于合并时存储有序数据</span></span><br><span class="line">		<span class="keyword">int</span>[] tmp = <span class="keyword">new</span> <span class="keyword">int</span>[arrayToSort.length];</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 递归调用，对左侧子数组继续分组</span></span><br><span class="line">		sortPart(arrayToSort, tmp, leftIndexStart, leftIndexEnd);</span><br><span class="line">		<span class="comment">// 递归调用，对右侧子数组继续分组</span></span><br><span class="line">		sortPart(arrayToSort, tmp, rightIndexStart, rightIndexEnd);</span><br><span class="line">		</span><br><span class="line">		<span class="comment">// 合并左右两个子组</span></span><br><span class="line">		merge(arrayToSort, tmp, leftIndexStart, leftIndexEnd, rightIndexStart, rightIndexEnd);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * 接收临时存储数组及上下界，用于内部递归调用</span></span><br><span class="line"><span class="comment">	 * */</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sortPart</span><span class="params">(<span class="keyword">int</span>[] array, <span class="keyword">int</span>[] tmp, <span class="keyword">int</span> left, <span class="keyword">int</span> right)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">int</span> leftIndexStart;</span><br><span class="line">		<span class="keyword">int</span> leftIndexEnd;</span><br><span class="line">		<span class="keyword">int</span> rightIndexStart;</span><br><span class="line">		<span class="keyword">int</span> rightIndexEnd;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 当子数组长度小于1时，直接返回</span></span><br><span class="line">		<span class="keyword">if</span> ((right - left) &lt; <span class="number">1</span>) &#123;</span><br><span class="line">			<span class="keyword">return</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		<span class="comment">// 获取各下标参数</span></span><br><span class="line">		<span class="keyword">int</span> midIndex = (right + left) / <span class="number">2</span>;</span><br><span class="line">		leftIndexStart = left;</span><br><span class="line">		leftIndexEnd = midIndex;</span><br><span class="line">		rightIndexStart = midIndex + <span class="number">1</span>;</span><br><span class="line">		rightIndexEnd = right;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 继续对左侧分组</span></span><br><span class="line">		sortPart(array, tmp, leftIndexStart, leftIndexEnd);</span><br><span class="line">		<span class="comment">// 继续对右侧分组</span></span><br><span class="line">		sortPart(array, tmp, rightIndexStart, rightIndexEnd);</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 合并两个子组</span></span><br><span class="line">		merge(array, tmp, leftIndexStart, leftIndexEnd, rightIndexStart, rightIndexEnd);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * 合并函数，使用了唯一的与原数组相同大小的空组。</span></span><br><span class="line"><span class="comment">	 * 由于所有合并步骤均在相对应的下标范围操作，因此元素并不会产生重叠。</span></span><br><span class="line"><span class="comment">	 * 最后的tmp也即为排序好的数组的拷贝。</span></span><br><span class="line"><span class="comment">	 * */</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">merge</span><span class="params">(<span class="keyword">int</span>[] array, <span class="keyword">int</span>[] tmp, <span class="keyword">int</span> leftStart, <span class="keyword">int</span> leftEnd, <span class="keyword">int</span> rightStart, <span class="keyword">int</span> rightEnd)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">int</span> leftIndex = leftStart;</span><br><span class="line">		<span class="keyword">int</span> rightIndex = rightStart;</span><br><span class="line">		<span class="keyword">int</span> tmpIndex = leftStart;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 交替遍历左右两组，并改变相应下标。</span></span><br><span class="line">		<span class="keyword">while</span>(leftIndex &lt;= leftEnd &amp;&amp; rightIndex &lt;= rightEnd) &#123;</span><br><span class="line">			<span class="keyword">if</span> (array[leftIndex] &lt; array[rightIndex]) &#123;</span><br><span class="line">				tmp[tmpIndex] = array[leftIndex];</span><br><span class="line">				tmpIndex++;</span><br><span class="line">				leftIndex++;</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				tmp[tmpIndex] = array[rightIndex];</span><br><span class="line">				tmpIndex++;</span><br><span class="line">				rightIndex++;</span><br><span class="line">			&#125;</span><br><span class="line">			</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		<span class="comment">// 交替遍历后，有可能一侧剩余下不定数量元素，继续将剩余元素填充进tmp</span></span><br><span class="line">		<span class="keyword">while</span>(leftIndex &lt;= leftEnd) &#123;</span><br><span class="line">			tmp[tmpIndex] = array[leftIndex];</span><br><span class="line">			tmpIndex++;</span><br><span class="line">			leftIndex++;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		<span class="comment">// 交替遍历后，有可能一侧剩余下不定数量元素，继续将剩余元素填充进tmp</span></span><br><span class="line">		<span class="keyword">while</span>(rightIndex &lt;= rightEnd) &#123;</span><br><span class="line">			tmp[tmpIndex] = array[rightIndex];</span><br><span class="line">			tmpIndex++;</span><br><span class="line">			rightIndex++;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		<span class="comment">// 将tmp中按顺序填充好的元素覆盖到原数组相应元素上</span></span><br><span class="line">		<span class="keyword">for</span>(<span class="keyword">int</span> i = leftStart; i &lt;= rightEnd; i ++) &#123;</span><br><span class="line">			array[i] = tmp[i];</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">int</span>[] a = &#123; <span class="number">13</span>, <span class="number">12</span>, <span class="number">11</span>, <span class="number">23</span>, <span class="number">9</span>, <span class="number">8</span>, <span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">2</span>, <span class="number">1</span> &#125;;</span><br><span class="line">		MergeSort.sortA(a);</span><br><span class="line">		</span><br><span class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; a.length; i++) &#123;</span><br><span class="line">			System.out.print(a[i] + <span class="string">", "</span>);</span><br><span class="line">		&#125;</span><br><span class="line">		System.out.println();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/algorithm/" rel="tag"># algorithm</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2016/08/04/quick_sort_note/" rel="next" title="快速排序">
+                  <i class="fa fa-chevron-left"></i> 快速排序
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2016/08/09/android_aidl_note/" rel="prev" title="Android中的IPC——AIDL方式">
+                  Android中的IPC——AIDL方式 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

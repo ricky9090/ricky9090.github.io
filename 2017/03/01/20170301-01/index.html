@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="Android中的联系人存储是通过ContentProvider实现的。因此APP对系统通讯录进行操作涉及到ContentProvider接口的使用。 通讯录存储常用的数据库表使用有关接口前，首先了解一下通讯录数据库中常用的数据库表：">
+<meta name="keywords" content="android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android通讯录管理（联系人的增删改查）">
+<meta property="og:url" content="https://ucx9002.github.io/2017/03/01/20170301-01/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="Android中的联系人存储是通过ContentProvider实现的。因此APP对系统通讯录进行操作涉及到ContentProvider接口的使用。 通讯录存储常用的数据库表使用有关接口前，首先了解一下通讯录数据库中常用的数据库表：">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-10-18T06:40:54.297Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android通讯录管理（联系人的增删改查）">
+<meta name="twitter:description" content="Android中的联系人存储是通过ContentProvider实现的。因此APP对系统通讯录进行操作涉及到ContentProvider接口的使用。 通讯录存储常用的数据库表使用有关接口前，首先了解一下通讯录数据库中常用的数据库表：">
+  <link rel="canonical" href="https://ucx9002.github.io/2017/03/01/20170301-01/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Android通讯录管理（联系人的增删改查） | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2017/03/01/20170301-01/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">Android通讯录管理（联系人的增删改查）
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2017-03-01 14:19:43" itemprop="dateCreated datePublished" datetime="2017-03-01T14:19:43+08:00">2017-03-01</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-10-18 14:40:54" itemprop="dateModified" datetime="2019-10-18T14:40:54+08:00">2019-10-18</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Android中的联系人存储是通过<code>ContentProvider</code>实现的。因此APP对系统通讯录进行操作涉及到ContentProvider接口的使用。</p>
+<h2 id="通讯录存储常用的数据库表"><a href="#通讯录存储常用的数据库表" class="headerlink" title="通讯录存储常用的数据库表"></a>通讯录存储常用的数据库表</h2><p>使用有关接口前，首先了解一下通讯录数据库中常用的数据库表：</p>
+<a id="more"></a>
+<table>
+<thead>
+<tr>
+<th>表名</th>
+<th>表用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>contacts</td>
+<td>联系人表，存储了实际的联系人姓名，头像，最后通话时间等信息。<br>会对实际的联系人数据进行一定去重。</td>
+</tr>
+<tr>
+<td>raw_contacts</td>
+<td>实际的联系人数据表，每一行是一个单独的联系人。<br>会存在多行对应同一个contacts表中条目的情况。</td>
+</tr>
+<tr>
+<td>data</td>
+<td>所有联系人信息数据。通过<code>raw_contact_id</code>外键与<code>raw_contacts</code>建立联系。</td>
+</tr>
+</tbody>
+</table>
+<p><br><br><strong>contacts与raw_contacts的区分</strong>  <br><br>一个raw_contacts对应一个联系人，程序中或用户操作生成新的联系人，就是直接在这个表中插入新条目。<br><br>contacts是实际通讯录中显示的联系人——当raw_contacts中存在相同名称的联系人时，系统会将这几个联系人合并。<br><br>（例如通过通讯录添加两个名字相同的名片，这时系统会提示是否要对这两个名片进行合并。）</p>
+<p><strong>data表</strong> <br><br>1.data表每一行都是一项数据(姓名，电话，Email，网址，生日等)。并通过外键<code>raw_contacts_id</code>与<code>raw_contacts</code>表关联起来。<br><br>2.由1所述，一个联系人根据情况会有多条data数据。数据存储在data1-15这15列中。<br><br>例如某一行存储电话号码，那么在表中data1列存储电话号码，data2列存储号码类型（单位／家庭／组织等）。<br><br>又例如某一行存储的联系人姓名，那么data1列存储显示在界面上的名称，data2存储名，data3存储姓。<br><br>3.依数据类型不同，data1-14的含义会不同；data15默认存储blob二进制形式的数据。<br><br>4.那么又如何区分不同行数据的真实类型呢？是通过data表中<code>mimetype_id</code>列的值（整形）来进行区分。根据这一列的取值，对data1-14进行不同的解析。<code>mimetype_id</code>中数值与类型的对应关系在<code>mimetypes</code>表中定义。例如：<br></p>
+<table>
+<thead>
+<tr>
+<th>_id</th>
+<th>mimetypes</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>vnd.android.cursor.item/email_v2</td>
+<td>电子邮件</td>
+</tr>
+<tr>
+<td>2</td>
+<td>vnd.android.cursor.item/im</td>
+<td>即时通讯</td>
+</tr>
+<tr>
+<td>3</td>
+<td>vnd.android.cursor.item/nickname</td>
+<td>昵称</td>
+</tr>
+</tbody>
+</table>
+<p><br><br>在编写代码时，实际传入的是mimetypes中的字符串参数，而不是ID值。</p>
+<p>以上数据库中所有表及字段的定义，都可在<code>android.provider.ContactsContract</code>中找到。<br><br>通讯录存储的数据文件在<code>/data/data/com.android.providers.contacts/databases/</code>目录下，需要手机获取Root权限。</p>
+<h2 id="对通讯录进行增删改查"><a href="#对通讯录进行增删改查" class="headerlink" title="对通讯录进行增删改查"></a>对通讯录进行增删改查</h2><h4 id="按电话号码查询联系人"><a href="#按电话号码查询联系人" class="headerlink" title="按电话号码查询联系人"></a>按电话号码查询联系人<br></h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Uri phoneUri = Uri.withAppendedPath(ContactsContract.CommonDataKinds.Phone.CONTENT_FILTER_URI, Uri.encode(phone));</span><br><span class="line"></span><br><span class="line">ContentResolver resolver = context.getContentResolver();</span><br><span class="line">Cursor cursor = resolver.query(phoneUri, <span class="keyword">new</span> String[]&#123;ContactsContract.CommonDataKinds.Phone._ID, </span><br><span class="line">    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.CONTACT_ID&#125;, <span class="keyword">null</span>, <span class="keyword">null</span>, <span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (cursor.moveToNext()) &#123;</span><br><span class="line">    <span class="keyword">int</span> id = cursor.getInt(<span class="number">0</span>);</span><br><span class="line">    String name = cursor.getString(<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">int</span> contactId = cursor.getInt(<span class="number">2</span>);</span><br><span class="line">    <span class="keyword">if</span> (name.equals(user.getName())) &#123;</span><br><span class="line">        deleteList.add(id);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><br><br>注意这里使用的URL是<code>ContactsContract.CommonDataKinds.Phone.CONTENT_FILTER_URI</code>，而不是<code>ContactsContract.PhoneLookup.CONTENT_FILTER_URI</code>。<br>这是由于<code>PhoneLookup.CONTENT_FILTER_URI</code>会以用户提供的手机号查询后，再使用标准格式的电话号码再次查找，会返回两个相同的结果。例如用户提供了号码<strong>17000000000</strong>，那么程序会先查询<strong>17000000000</strong>号码，再查询<strong>+86 17000000000</strong>，并且两次查询都会成功。</p>
+<h4 id="查询通讯录中所有联系人"><a href="#查询通讯录中所有联系人" class="headerlink" title="查询通讯录中所有联系人"></a>查询通讯录中所有联系人<br></h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Uri uri = ContactsContract.Data.CONTENT_URI;</span><br><span class="line">ContentResolver resolver = context.getContentResolver();</span><br><span class="line">Cursor cursorUser = resolver.query(uri, <span class="keyword">new</span> String[]&#123;ContactsContract.CommonDataKinds.Phone._ID,</span><br><span class="line">    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID&#125;, <span class="keyword">null</span>, <span class="keyword">null</span>, <span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span>( cursorUser.moveToNext()) &#123;</span><br><span class="line">    <span class="keyword">int</span> id = cursorUser.getInt(<span class="number">0</span>); <span class="comment">// 按上面数组的声明顺序获取</span></span><br><span class="line">    String name = cursorUser.getString(<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">int</span> rawContactsId = cursorUser.getInt(<span class="number">2</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="删除联系人某项数据-Data中某一项"><a href="#删除联系人某项数据-Data中某一项" class="headerlink" title="删除联系人某项数据(Data中某一项)"></a>删除联系人某项数据(Data中某一项)<br></h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> id; <span class="comment">// data表中对应的id值</span></span><br><span class="line">ArrayList&lt;ContentProviderOperation&gt; ops = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)</span><br><span class="line">    .withSelection(ContactsContract.Data._ID + <span class="string">"=?"</span>, <span class="keyword">new</span> String[]&#123;String.valueOf(d)&#125;)</span><br><span class="line">    .build());</span><br><span class="line"></span><br><span class="line">context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);</span><br></pre></td></tr></table></figure>
+<h4 id="向通讯录中添加新的联系人"><a href="#向通讯录中添加新的联系人" class="headerlink" title="向通讯录中添加新的联系人"></a>向通讯录中添加新的联系人<br></h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">ArrayList&lt;ContentProviderOperation&gt; ops = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)</span><br><span class="line">    .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, <span class="keyword">null</span>)  <span class="comment">// 此处传入null添加一个raw_contact空数据</span></span><br><span class="line">    .build());</span><br><span class="line">ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)</span><br><span class="line">    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, <span class="number">0</span>)  <span class="comment">// RAW_CONTACT_ID是第一个事务添加得到的，因此这里传入0，applyBatch返回的ContentProviderResult[]数组中第一项</span></span><br><span class="line">    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)</span><br><span class="line">    .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, userName)</span><br><span class="line">    .build());</span><br><span class="line">ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)</span><br><span class="line">    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, <span class="number">0</span>)</span><br><span class="line">    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)</span><br><span class="line">    .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phoneNumber)</span><br><span class="line">    .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_WORK)</span><br><span class="line">    .build());</span><br><span class="line"></span><br><span class="line">context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);</span><br></pre></td></tr></table></figure>
+<p>其中withValueBackReference接口传参代表此键值是事务中之前操作得到的结果，因此需要传入之前事务的index值。由于添加联系人是在第一步操作，对应结果数组的第0项。</p>
+<h4 id="向已有联系人中添加新数据"><a href="#向已有联系人中添加新数据" class="headerlink" title="向已有联系人中添加新数据"></a>向已有联系人中添加新数据<br></h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">ArrayList&lt;ContentProviderOperation&gt; ops = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)</span><br><span class="line">    .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawContactsId)  <span class="comment">// 这里关键是传入正确的raw_contacts_id值</span></span><br><span class="line">    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)</span><br><span class="line">    .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phoneNumber)</span><br><span class="line">    .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_WORK)</span><br><span class="line">    .build());</span><br><span class="line"></span><br><span class="line">context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);</span><br></pre></td></tr></table></figure>
+<h2 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h2><p><a href="https://developer.android.google.cn/guide/topics/providers/contacts-provider.html" target="_blank" rel="noopener">通讯录Android官方文档，常用数据库表及相应含义</a><br><a href="http://stackoverflow.com/questions/21967727/phonelookup-content-filter-uri-returns-twice-the-same-contact" target="_blank" rel="noopener">PhoneLookup.CONTENT_FILTER_URI returns twice the same contact</a><br><a href="http://stackoverflow.com/questions/4655291/what-are-the-semantics-of-withvaluebackreference" target="_blank" rel="noopener">What are the semantics of withValueBackReference?</a></p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/android/" rel="tag"># android</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2017/02/07/js_closure/" rel="next" title="简述Javascript中的闭包">
+                  <i class="fa fa-chevron-left"></i> 简述Javascript中的闭包
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2017/05/03/20170503-01/" rel="prev" title="Java中的动态代理">
+                  Java中的动态代理 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#通讯录存储常用的数据库表"><span class="nav-number">1.</span> <span class="nav-text">通讯录存储常用的数据库表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#对通讯录进行增删改查"><span class="nav-number">2.</span> <span class="nav-text">对通讯录进行增删改查</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#按电话号码查询联系人"><span class="nav-number">2.0.1.</span> <span class="nav-text">按电话号码查询联系人</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查询通讯录中所有联系人"><span class="nav-number">2.0.2.</span> <span class="nav-text">查询通讯录中所有联系人</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#删除联系人某项数据-Data中某一项"><span class="nav-number">2.0.3.</span> <span class="nav-text">删除联系人某项数据(Data中某一项)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#向通讯录中添加新的联系人"><span class="nav-number">2.0.4.</span> <span class="nav-text">向通讯录中添加新的联系人</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#向已有联系人中添加新数据"><span class="nav-number">2.0.5.</span> <span class="nav-text">向已有联系人中添加新数据</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文档"><span class="nav-number">3.</span> <span class="nav-text">参考文档</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

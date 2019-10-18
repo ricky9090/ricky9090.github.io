@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="在XCode6以上版本中，苹果添加了用于异步回调测试的api，因此不用像旧版本那样，发起异步调用后通过循环查询标志位，来检查异步回调函数的调用了。在新版本中直接使用XCTestExpectation的API即可实现这一功能。">
+<meta name="keywords" content="iOS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS中异步回调的单元测试方法">
+<meta property="og:url" content="https://ucx9002.github.io/2016/08/11/ios_unit_test/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="在XCode6以上版本中，苹果添加了用于异步回调测试的api，因此不用像旧版本那样，发起异步调用后通过循环查询标志位，来检查异步回调函数的调用了。在新版本中直接使用XCTestExpectation的API即可实现这一功能。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-06-11T08:46:44.007Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS中异步回调的单元测试方法">
+<meta name="twitter:description" content="在XCode6以上版本中，苹果添加了用于异步回调测试的api，因此不用像旧版本那样，发起异步调用后通过循环查询标志位，来检查异步回调函数的调用了。在新版本中直接使用XCTestExpectation的API即可实现这一功能。">
+  <link rel="canonical" href="https://ucx9002.github.io/2016/08/11/ios_unit_test/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>iOS中异步回调的单元测试方法 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2016/08/11/ios_unit_test/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">iOS中异步回调的单元测试方法
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2016-08-11 14:33:12" itemprop="dateCreated datePublished" datetime="2016-08-11T14:33:12+08:00">2016-08-11</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-06-11 16:46:44" itemprop="dateModified" datetime="2018-06-11T16:46:44+08:00">2018-06-11</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在XCode6以上版本中，苹果添加了用于异步回调测试的api，因此不用像旧版本那样，发起异步调用后通过循环查询标志位，来检查异步回调函数的调用了。<br>在新版本中直接使用<code>XCTestExpectation</code>的API即可实现这一功能。</p>
+<a id="more"></a>
+<p>首先来看一下官方文档中的代码片段：<br><figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)testDocumentOpening</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 创建一个expectation对象</span></span><br><span class="line">    <span class="built_in">XCTestExpectation</span> *documentOpenExpectation = [<span class="keyword">self</span> expectationWithDescription:<span class="string">@"document open"</span>];</span><br><span class="line"> </span><br><span class="line">    <span class="built_in">NSURL</span> *URL = [[<span class="built_in">NSBundle</span> bundleForClass:[<span class="keyword">self</span> <span class="keyword">class</span>]]</span><br><span class="line">                              URLForResource:<span class="string">@"TestDocument"</span> withExtension:<span class="string">@"mydoc"</span>];</span><br><span class="line">    <span class="built_in">UIDocument</span> *doc = [[<span class="built_in">UIDocument</span> alloc] initWithFileURL:URL];</span><br><span class="line">    [doc openWithCompletionHandler:^(<span class="built_in">BOOL</span> success) &#123;</span><br><span class="line">        <span class="built_in">XCTAssert</span>(success);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// assert成功后 便会调用expectation的fulfill方法，来触发下面的handler</span></span><br><span class="line">        [documentOpenExpectation fulfill];</span><br><span class="line">    &#125;];</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 在case最后使用这一方法，此时单测程序会阻塞到这里；除非达到了超时时间（秒单位）或者是回调函数中调用了fulfill，单测程序才会结束</span></span><br><span class="line">    <span class="comment">// 若是超时情况，则认为case失败；若通过expectation的fulfill触发，则case通过</span></span><br><span class="line">    [<span class="keyword">self</span> waitForExpectationsWithTimeout:<span class="number">1</span> handler:^(<span class="built_in">NSError</span> *error) &#123;</span><br><span class="line">        [doc closeWithCompletionHandler:<span class="literal">nil</span>];</span><br><span class="line">    &#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>步骤就是：<br>在单测开始位置声明需要使用的Expectation对象，在回调中触发<code>fulfill</code>函数，单测的末尾调用api进行等待。</p>
+<p>官方文档使用的block方式回调。对于代理方式的回调，同样适用。不过由于回调函数在单测函数外侧，需要把变量声明到类中，这里通过<code>NSURLConnection</code>异步GET回调来说明：<br><figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="meta-string">&lt;XCTest/XCTest.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">HelloWorldXCodeTests</span> : <span class="title">XCTestCase</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">HelloWorldXCodeTests</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 回调对应的Expectation对象</span></span><br><span class="line"><span class="built_in">XCTestExpectation</span> *networkSuccessExpectation;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)setUp &#123;</span><br><span class="line">    [<span class="keyword">super</span> setUp];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)tearDown &#123;</span><br><span class="line">    [<span class="keyword">super</span> tearDown];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)testNetworkOpening</span><br><span class="line">&#123;</span><br><span class="line">    networkSuccessExpectation = [<span class="keyword">self</span> expectationWithDescription:<span class="string">@"document open"</span>];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建url</span></span><br><span class="line">    <span class="built_in">NSURL</span> *url = [<span class="built_in">NSURL</span> URLWithString:<span class="string">@"https://api.douban.com/v2/book/1220562"</span>];</span><br><span class="line">    <span class="comment">// 创建请求</span></span><br><span class="line">    <span class="built_in">NSURLRequest</span> *request = [[<span class="built_in">NSURLRequest</span> alloc]initWithURL:url cachePolicy:<span class="built_in">NSURLRequestUseProtocolCachePolicy</span> timeoutInterval:<span class="number">10</span>];</span><br><span class="line">    <span class="comment">// 连接服务器</span></span><br><span class="line">    <span class="built_in">NSURLConnection</span> *connection = [[<span class="built_in">NSURLConnection</span> alloc] initWithRequest:request delegate:<span class="keyword">self</span>];</span><br><span class="line">    [connection start];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 等待回调方法，10秒超时</span></span><br><span class="line">    [<span class="keyword">self</span> waitForExpectationsWithTimeout:<span class="number">10</span> handler:^(<span class="built_in">NSError</span> *error) &#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"test case over"</span>);</span><br><span class="line">    &#125;];</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 异步GET请求回调</span></span><br><span class="line">- (<span class="keyword">void</span>)connection:(<span class="built_in">NSURLConnection</span> *)connection didReceiveResponse:(<span class="built_in">NSURLResponse</span> *)response</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">NSHTTPURLResponse</span> *res = (<span class="built_in">NSHTTPURLResponse</span> *)response;</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@"http connection: %@"</span>,[res allHeaderFields]);</span><br><span class="line">    <span class="comment">// 触发fulfill方法，跳出单测程序等待状态</span></span><br><span class="line">    [networkSuccessExpectation fulfill];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure></p>
+<p>如果网络不通，那么10s超时后就会导致case失败；反之若成功请求则会在回调函数中打印出返回头，并触发单测成功。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/iOS/" rel="tag"># iOS</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2016/08/09/android_aidl_note/" rel="next" title="Android中的IPC——AIDL方式">
+                  <i class="fa fa-chevron-left"></i> Android中的IPC——AIDL方式
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2016/08/11/android_automation_test/" rel="prev" title="Android SDK中的自动化测试">
+                  Android SDK中的自动化测试 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="Android系统中提供了模拟GPS坐标的功能，可以很方便的帮助我们测试不同地理位置下应用中各个功能效果。">
+<meta name="keywords" content="android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android系统中模拟GPS位置">
+<meta property="og:url" content="https://ucx9002.github.io/2016/08/23/android_mock_gps/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="Android系统中提供了模拟GPS坐标的功能，可以很方便的帮助我们测试不同地理位置下应用中各个功能效果。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://img.blog.csdn.net/20160823183556518">
+<meta property="og:updated_time" content="2018-06-11T08:46:43.935Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android系统中模拟GPS位置">
+<meta name="twitter:description" content="Android系统中提供了模拟GPS坐标的功能，可以很方便的帮助我们测试不同地理位置下应用中各个功能效果。">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20160823183556518">
+  <link rel="canonical" href="https://ucx9002.github.io/2016/08/23/android_mock_gps/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Android系统中模拟GPS位置 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ucx9002.github.io/2016/08/23/android_mock_gps/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">Android系统中模拟GPS位置
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2016-08-23 18:34:19" itemprop="dateCreated datePublished" datetime="2016-08-23T18:34:19+08:00">2016-08-23</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-06-11 16:46:43" itemprop="dateModified" datetime="2018-06-11T16:46:43+08:00">2018-06-11</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Android系统中提供了模拟GPS坐标的功能，可以很方便的帮助我们测试不同地理位置下应用中各个功能效果。<br><a id="more"></a></p>
+<h3 id="模拟器中模拟位置方法"><a href="#模拟器中模拟位置方法" class="headerlink" title="模拟器中模拟位置方法"></a><strong>模拟器中模拟位置方法</strong></h3><p>模拟器与真机中的模拟手段有所差异，在模拟器中，可以通过Android的调试工具，或是命令行来修改GPS坐标点。<br>首先通过adb命令的修改方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb geo fix 116.813752 39.820015</span><br></pre></td></tr></table></figure></p>
+<p>注意如果链接了多个设备，adb命令需要添加<code>-s</code>参数指定模拟器设备。</p>
+<p>同样原理，可以使用Android SDK中的DDMS工具来修改GPS坐标；打开DDMS，可以看到Emulator面板中的GPS设置选项，<br>当打开模拟器运行时，这里就会变成可操作状态。<br><img src="http://img.blog.csdn.net/20160823183556518" alt="DDMS中设置模拟器GPS坐标"></p>
+<p>对于第三方模拟器，Genymotion也提供了这样的功能。不仅可以通过GenyMotion虚拟机的控制面板调节GPS参数（截图略），还可以通过Genymotion提供的Java API修改坐标点：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Context mContext = getActivity();</span><br><span class="line">GenymotionManager genymotion = GenymotionManager.getGenymotionManager(mContext);</span><br><span class="line"></span><br><span class="line">genymotion.getGps()</span><br><span class="line">    .setLatitude(<span class="number">39.820015</span>)</span><br><span class="line">    .setLongitude(<span class="number">116.813752</span>);</span><br></pre></td></tr></table></figure></p>
+<h3 id="真机中模拟位置方法"><a href="#真机中模拟位置方法" class="headerlink" title="真机中模拟位置方法"></a><strong>真机中模拟位置方法</strong></h3><p>真机中模拟GPS位置的方法稍复杂一点。<br>首先，需要到系统设置中“开发者选项”处，将其中的“允许模拟位置”打开。</p>
+<p>然后我们需要编写一个简单的APP，来通过系统API修改GPS坐标值。<br>这涉及了一个权限：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;uses-permission android:name=&quot;android.permission.ACCESS_MOCK_LOCATION&quot;/&gt;</span><br></pre></td></tr></table></figure></p>
+<p>在Eclipse环境下，直接修改AndroidManifest即可；<br>在Android Studio环境下，需要建立<code>src/debug</code>这个文件夹，然后在里面创建一个debug版本的AndroidManifest.xml文件，才能添加这个权限。</p>
+<p>然后来编写代码：<br>在LocationManager中，提供了一个接口<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addTestProvider</span><span class="params">(String name, </span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">boolean</span> requiresNetwork, </span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">boolean</span> requiresSatellite, </span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">boolean</span> hasMonetaryCost, </span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">boolean</span> supportsAltitude, </span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">boolean</span> supportsBearing, </span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">int</span> accuracy)</span></span></span><br></pre></td></tr></table></figure></p>
+<p>参数比较多，但接口的用途还是很清晰的——添加一个用于模拟位置的Provider。然后我们可以向这个Provider中设定模拟的位置：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> LocationManager mLocManager;</span><br><span class="line"></span><br><span class="line">mLocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);</span><br><span class="line">mLocManager.addTestProvider(LocationManager.GPS_PROVIDER,</span><br><span class="line">    <span class="string">"requiresNetwork"</span> == <span class="string">""</span>,</span><br><span class="line">    <span class="string">"requiresSatellite"</span> == <span class="string">""</span>,</span><br><span class="line">    <span class="string">"requiresCell"</span> == <span class="string">""</span>,</span><br><span class="line">    <span class="string">"hasMonetaryCost"</span> == <span class="string">""</span>,</span><br><span class="line">    <span class="string">"supportsAltitude"</span> == <span class="string">""</span>,</span><br><span class="line">    <span class="string">"supportsSpeed"</span> == <span class="string">""</span>,</span><br><span class="line">    <span class="string">"supportsBearing"</span> == <span class="string">""</span>,</span><br><span class="line">    Criteria.NO_REQUIREMENT,</span><br><span class="line">    Criteria.ACCURACY_COARSE);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建新的Location对象，并设定必要的属性值</span></span><br><span class="line">Location newLocation = <span class="keyword">new</span> Location(LocationManager.GPS_PROVIDER);</span><br><span class="line">newLocation.setLatitude(<span class="number">39.820015</span>);</span><br><span class="line">newLocation.setLongitude(<span class="number">116.813752</span>);</span><br><span class="line">newLocation.setAccuracy(<span class="number">500</span>);</span><br><span class="line">newLocation.setTime(System.currentTimeMillis());</span><br><span class="line">newLocation.setElapsedRealtimeNanos(System.currentTimeMillis());</span><br><span class="line"></span><br><span class="line"><span class="comment">// 开启测试Provider</span></span><br><span class="line">mLocManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, <span class="keyword">true</span>);</span><br><span class="line"></span><br><span class="line">mLocManager.setTestProviderStatus(LocationManager.GPS_PROVIDER,</span><br><span class="line">    LocationProvider.AVAILABLE,</span><br><span class="line">    <span class="keyword">null</span>,</span><br><span class="line">    System.currentTimeMillis());</span><br><span class="line"></span><br><span class="line"><span class="comment">// 设置最新位置</span></span><br><span class="line">mLocManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, newLocation);</span><br></pre></td></tr></table></figure></p>
+<p>不过这种方式设置坐标后，并没有触发GPS的onLocationChanged回调函数，目前还不清楚后面的原理。但可以使用<code>getLastKnownLocation</code>接口获取:<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Location tmp = mLocManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);</span><br><span class="line">Log.i(TAG, tmp.getLatitude() + <span class="string">", "</span> + tmp.getLongitude());</span><br></pre></td></tr></table></figure></p>
+<h3 id="真机模拟位置原理"><a href="#真机模拟位置原理" class="headerlink" title="真机模拟位置原理"></a><strong>真机模拟位置原理</strong></h3><p>在真机模拟位置点的过程中，我们调用了很多<code>TestProvider</code>有关的API。<br>首先来看一下<code>addTestProvider</code>函数，其最终调用到的逻辑位于<code>com.android.server.LocationManagerService</code>中<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addTestProvider</span><span class="params">(String name, ProviderProperties properties, String opPackageName)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!canCallerAccessMockLocation(opPackageName)) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 由此可以看到无法传入PASSIVE_PROVIDER作为测试使用</span></span><br><span class="line">    <span class="keyword">if</span> (LocationManager.PASSIVE_PROVIDER.equals(name)) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Cannot mock the passive location provider"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">long</span> identity = Binder.clearCallingIdentity();</span><br><span class="line">    <span class="keyword">synchronized</span> (mLock) &#123;</span><br><span class="line">        <span class="comment">// remove the real provider if we are replacing GPS or network provider</span></span><br><span class="line">        <span class="comment">// 在这里比较传入的Provider名称，如果和GPS_PROVIDER相同，就将真正的GPS_PROVIDER移除掉</span></span><br><span class="line">        <span class="keyword">if</span> (LocationManager.GPS_PROVIDER.equals(name)</span><br><span class="line">                || LocationManager.NETWORK_PROVIDER.equals(name)</span><br><span class="line">                || LocationManager.FUSED_PROVIDER.equals(name)) &#123;</span><br><span class="line">            LocationProviderInterface p = mProvidersByName.get(name);</span><br><span class="line">            <span class="keyword">if</span> (p != <span class="keyword">null</span>) &#123;</span><br><span class="line">                removeProviderLocked(p);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 会向mMockProviders中添加这一测试用的provider，以便后续使用</span></span><br><span class="line">        addTestProviderLocked(name, properties);</span><br><span class="line">        updateProvidersLocked();</span><br><span class="line">    &#125;</span><br><span class="line">    Binder.restoreCallingIdentity(identity);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>因此在我们传入GPS_PROVIDER后，后续请求GPS更新，就会使用我们给定的位置了。<br>再来看向测试用的PROVIDER设定位置点坐标，其真正逻辑同样位于<code>com.android.server.LocationManagerService</code>中：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setTestProviderLocation</span><span class="params">(String provider, Location loc, String opPackageName)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!canCallerAccessMockLocation(opPackageName)) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">synchronized</span> (mLock) &#123;</span><br><span class="line">        MockProvider mockProvider = mMockProviders.get(provider);</span><br><span class="line">        <span class="keyword">if</span> (mockProvider == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Provider \""</span> + provider + <span class="string">"\" unknown"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// clear calling identity so INSTALL_LOCATION_PROVIDER permission is not required</span></span><br><span class="line">        <span class="keyword">long</span> identity = Binder.clearCallingIdentity();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 向mockProvider传入位置点</span></span><br><span class="line">        mockProvider.setLocation(loc);</span><br><span class="line">        Binder.restoreCallingIdentity(identity);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中mockProvider是从<code>mMockProviders</code>中得到的，在<code>addTestProvider</code>时，<code>addTestProviderLocked</code>函数会向其添加我们设定的provider。<br>继续追踪到<code>setLocation</code>函数，位于<code>com.android.server.location.MockProvider</code>中：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setLocation</span><span class="params">(Location l)</span> </span>&#123;</span><br><span class="line">    mLocation.set(l);</span><br><span class="line">    mHasLocation = <span class="keyword">true</span>;</span><br><span class="line">    <span class="keyword">if</span> (mEnabled) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 调用LocationManagerService中的函数，而非应用层可获取到的LocationManager</span></span><br><span class="line">            mLocationManager.reportLocation(mLocation, <span class="keyword">false</span>);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (RemoteException e) &#123;</span><br><span class="line">            Log.e(TAG, <span class="string">"RemoteException calling reportLocation"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>还是要回到LocationManagerService中：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">reportLocation</span><span class="params">(Location location, <span class="keyword">boolean</span> passive)</span> </span>&#123;</span><br><span class="line">    checkCallerIsProvider();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!location.isComplete()) &#123;</span><br><span class="line">        Log.w(TAG, <span class="string">"Dropping incomplete location: "</span> + location);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mLocationHandler.removeMessages(MSG_LOCATION_CHANGED, location);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 向Handler发送MSG_LOCATION_CHANGED消息</span></span><br><span class="line">    Message m = Message.obtain(mLocationHandler, MSG_LOCATION_CHANGED, location);</span><br><span class="line">    m.arg1 = (passive ? <span class="number">1</span> : <span class="number">0</span>);</span><br><span class="line">    mLocationHandler.sendMessageAtFrontOfQueue(m);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>最终是在这里发送了<code>MSG_LOCATION_CHANGED</code>消息，但为何没有触发onLocationChanged？还需要研究一下……</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/android/" rel="tag"># android</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2016/08/11/android_automation_test/" rel="next" title="Android SDK中的自动化测试">
+                  <i class="fa fa-chevron-left"></i> Android SDK中的自动化测试
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2016/08/31/listview_refresh/" rel="prev" title="ListView中的局部刷新">
+                  ListView中的局部刷新 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#模拟器中模拟位置方法"><span class="nav-number">1.</span> <span class="nav-text">模拟器中模拟位置方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#真机中模拟位置方法"><span class="nav-number">2.</span> <span class="nav-text">真机中模拟位置方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#真机模拟位置原理"><span class="nav-number">3.</span> <span class="nav-text">真机模拟位置原理</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ucx9002" title="GitHub &rarr; https://github.com/ucx9002" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
