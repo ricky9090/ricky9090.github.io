@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.7.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="Kotlin标准库中，let, run, with, apply, also 这些函数在官方文档中称为 Scope Functions 。在结合 Lambda 表达式情况下，用这些函数写一些特定逻辑还是很方便的。 下面通过两个测试类阐述一下各个函数的使用方法。">
+<meta name="keywords" content="kotlin">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kotlin常用内置函数">
+<meta property="og:url" content="https://ricky9090.github.io/2019/11/15/20191115_01/index.html">
+<meta property="og:site_name" content="Ricky&#39;s Blog">
+<meta property="og:description" content="Kotlin标准库中，let, run, with, apply, also 这些函数在官方文档中称为 Scope Functions 。在结合 Lambda 表达式情况下，用这些函数写一些特定逻辑还是很方便的。 下面通过两个测试类阐述一下各个函数的使用方法。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-11-15T03:49:43.833Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kotlin常用内置函数">
+<meta name="twitter:description" content="Kotlin标准库中，let, run, with, apply, also 这些函数在官方文档中称为 Scope Functions 。在结合 Lambda 表达式情况下，用这些函数写一些特定逻辑还是很方便的。 下面通过两个测试类阐述一下各个函数的使用方法。">
+  <link rel="canonical" href="https://ricky9090.github.io/2019/11/15/20191115_01/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Kotlin常用内置函数 | Ricky's Blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ricky's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">A long way to go.</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://ricky9090.github.io/2019/11/15/20191115_01/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ricky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ricky's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">Kotlin常用内置函数
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2019-11-15 10:05:00 / 修改时间：11:49:43" itemprop="dateCreated datePublished" datetime="2019-11-15T10:05:00+08:00">2019-11-15</time>
+            </span>
+          
+            
+
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Kotlin标准库中，<code>let</code>, <code>run</code>, <code>with</code>, <code>apply</code>, <code>also</code> 这些函数在官方文档中称为 <em>Scope Functions</em> 。在结合 Lambda 表达式情况下，用这些函数写一些特定逻辑还是很方便的。</p>
+<p>下面通过两个测试类阐述一下各个函数的使用方法。<br><a id="more"></a><br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Person</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String name;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> age;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getName</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> name;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setName</span><span class="params">(String name)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getAge</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> age;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setAge</span><span class="params">(<span class="keyword">int</span> age)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.age = age;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">speak</span><span class="params">(String msg)</span> </span>&#123;</span><br><span class="line">        System.out.println(msg);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="run"><a href="#run" class="headerlink" title="run"></a>run</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;R&gt;</span> <span class="title">run</span><span class="params">(block: ()</span></span> -&gt; R): R</span><br></pre></td></tr></table></figure>
+<p>执行 Lambda，并返回 Lambda 的结果</p>
+<p>例如通过 Lambda 执行一些逻辑，生成某个对象并获取其引用<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> car: Car = run &#123;</span><br><span class="line">    <span class="comment">// ......</span></span><br><span class="line">    Car()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个 <code>run</code> 方法不需要对象，可以直接调用</p>
+<h2 id="T-run"><a href="#T-run" class="headerlink" title="T.run"></a>T.run</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T, R&gt;</span> T.<span class="title">run</span><span class="params">(block: <span class="type">T</span>.()</span></span> -&gt; R): R</span><br></pre></td></tr></table></figure>
+<p>在某个对象上执行 Lambda，将此对象作为 Lambda 的接收者。<br>可以在 Lambda 中使用this引用，返回 Lambda 执行结果。</p>
+<p>例如<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> car: Car = person.run &#123;</span><br><span class="line">    <span class="keyword">this</span>.speak(<span class="string">"person.run"</span>)</span><br><span class="line">    Car()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在 <em>person</em> 对象上执行 <code>run</code>，可通过 <strong>this</strong> 调用 <code>Person</code> 类中的方法。最后返回生成的 <code>Car</code> 对象。</p>
+<h2 id="with"><a href="#with" class="headerlink" title="with"></a>with</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T, R&gt;</span> <span class="title">with</span><span class="params">(receiver: <span class="type">T</span>, block: <span class="type">T</span>.()</span></span> -&gt; R): R</span><br></pre></td></tr></table></figure>
+<p>和上面的 <code>run</code> 有些类似，不过这里不用通过 <em>person</em> 对象来调用了，直接调用 <code>with</code> 方法即可。同样返回 Lambda 执行的结果。</p>
+<p>例如<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> car: Car = with(person) &#123;</span><br><span class="line">    <span class="keyword">this</span>.speak(<span class="string">"person.with"</span>)</span><br><span class="line">    Car()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="T-apply"><a href="#T-apply" class="headerlink" title="T.apply"></a>T.apply</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> T.<span class="title">apply</span><span class="params">(block: <span class="type">T</span>.()</span></span> -&gt; <span class="built_in">Unit</span>): T</span><br></pre></td></tr></table></figure>
+<p>在给定对象上执行 Lambda，同样将这一对象作为接收者。最后返回这个对象自身。</p>
+<p>非常适合用来创建对象，并且最后返回对象自身，可进一步调用其公开方法。感觉和 Builder 模式有些类似。在 Lambda中，调用对象自身方法可以省略 <code>this</code><br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> person: Person = Person().apply &#123;</span><br><span class="line">    <span class="keyword">this</span>.age = <span class="number">20</span></span><br><span class="line">    name = <span class="string">"Jack"</span></span><br><span class="line">&#125;.apply &#123; </span><br><span class="line">    <span class="keyword">this</span>.speak(<span class="string">"Hello"</span>)</span><br><span class="line">    speak(<span class="string">"World"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="T-also"><a href="#T-also" class="headerlink" title="T.also"></a>T.also</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> T.<span class="title">also</span><span class="params">(block: (<span class="type">T</span>)</span></span> -&gt; <span class="built_in">Unit</span>): T</span><br></pre></td></tr></table></figure>
+<p>类似 <code>apply</code>，区别在于将对象作为参数传进 Lambda 中，而不是作为 Lambda 的接收者。在 Lambda中以 <strong>it</strong> 作为对象引用（也可以显示指定名称）。</p>
+<p>例如<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">person.also &#123;</span><br><span class="line">    it.speak(<span class="string">"person.speak"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">person.also &#123; he -&gt;</span><br><span class="line">    he.speak(<span class="string">"person.speak"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="T-let"><a href="#T-let" class="headerlink" title="T.let"></a>T.let</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T, R&gt;</span> T.<span class="title">let</span><span class="params">(block: (<span class="type">T</span>)</span></span> -&gt; R): R</span><br></pre></td></tr></table></figure>
+<p>将对象作为参数传进 Lambda，执行并返回 Lambda 结果。</p>
+<p>例如<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> car: Car = person.let &#123;</span><br><span class="line">    it.speak(<span class="string">"person.let"</span>)</span><br><span class="line">    Car()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="T-takeIf"><a href="#T-takeIf" class="headerlink" title="T.takeIf"></a>T.takeIf</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> T.<span class="title">takeIf</span><span class="params">(predicate: (<span class="type">T</span>)</span></span> -&gt; <span class="built_in">Boolean</span>): T?</span><br></pre></td></tr></table></figure>
+<p>将对象作为参数传进 Lambda，当 Lambda 执行结果 <strong>true</strong> 时，返回此对象，否则返回 <strong>null</strong></p>
+<p>例如<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> child: Person? = Person().apply &#123;</span><br><span class="line">    age = <span class="number">20</span></span><br><span class="line">&#125;.takeIf &#123;</span><br><span class="line">    it.age &lt; <span class="number">18</span></span><br><span class="line">&#125;</span><br><span class="line">println(child)</span><br></pre></td></tr></table></figure></p>
+<p>因为年龄不小于18，打印结果是 <strong>null</strong></p>
+<h2 id="T-takeUnless"><a href="#T-takeUnless" class="headerlink" title="T.takeUnless"></a>T.takeUnless</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> T.<span class="title">takeUnless</span><span class="params">(predicate: (<span class="type">T</span>)</span></span> -&gt; <span class="built_in">Boolean</span>): T?</span><br></pre></td></tr></table></figure>
+<p>和 <code>takeIf</code> 相反，当 Lambda 执行结果为 <strong>true</strong> 时，返回 <strong>null</strong>，否则返回此对象</p>
+<p>例如<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> adult: Person? = Person().apply &#123;</span><br><span class="line">    age = <span class="number">20</span></span><br><span class="line">&#125;.takeUnless &#123;</span><br><span class="line">    it.age &lt; <span class="number">18</span></span><br><span class="line">&#125;</span><br><span class="line">println(adult)</span><br></pre></td></tr></table></figure></p>
+<p>打印结果不为空</p>
+<h2 id="repeat"><a href="#repeat" class="headerlink" title="repeat"></a>repeat</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="title">repeat</span><span class="params">(times: <span class="type">Int</span>, action: (<span class="type">Int</span>)</span></span> -&gt; <span class="built_in">Unit</span>)</span><br></pre></td></tr></table></figure>
+<p>重复执行 Lambda <strong>N</strong> 次，将循环 Index 传进 Lambda中</p>
+<p>例如<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">repeat(<span class="number">3</span>) &#123;</span><br><span class="line">    person.speak(<span class="string">"speak <span class="variable">$it</span> times"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>打印结果</p>
+<blockquote>
+<p>speak 0 times<br>speak 1 times<br>speak 2 times</p>
+</blockquote>
+<h2 id="方法的选择"><a href="#方法的选择" class="headerlink" title="方法的选择"></a>方法的选择</h2><p>Kotlin官方文档中介绍了这些函数对应的场景。同时建议不要过度使用这些函数，以避免降低代码可读性。</p>
+<table>
+<thead>
+<tr>
+<th>Funtion</th>
+<th>Object reference</th>
+<th>Return value</th>
+<th>Is extension funtion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>let</td>
+<td>it</td>
+<td>Lambda result</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>run</td>
+<td>this</td>
+<td>Lambda result</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>run</td>
+<td>-</td>
+<td>Lambda result</td>
+<td>No:called without the context object</td>
+</tr>
+<tr>
+<td>with</td>
+<td>this</td>
+<td>Lambda result</td>
+<td>No:takes the context object as an argument</td>
+</tr>
+<tr>
+<td>apply</td>
+<td>this</td>
+<td>Context object</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>also</td>
+<td>it</td>
+<td>Context object</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Executing a lambda on non-null objects: <strong>let</strong></li>
+<li>Introducing an expression as a variable in local scope: <strong>let</strong></li>
+<li>Object configuration: <strong>apply</strong></li>
+<li>Object configuration and computing the result: <strong>run</strong></li>
+<li>Running statements where an expression is required: non-extension <strong>run</strong></li>
+<li>Additional effects: <strong>also</strong></li>
+<li>Grouping function calls on an object: <strong>with</strong></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/kotlin/" rel="tag"># kotlin</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2019/06/10/20190610_01/" rel="next" title="Android中使用Kotlin协程代替RxJava封装网络请求">
+                  <i class="fa fa-chevron-left"></i> Android中使用Kotlin协程代替RxJava封装网络请求
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#run"><span class="nav-number">1.</span> <span class="nav-text">run</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#T-run"><span class="nav-number">2.</span> <span class="nav-text">T.run</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#with"><span class="nav-number">3.</span> <span class="nav-text">with</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#T-apply"><span class="nav-number">4.</span> <span class="nav-text">T.apply</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#T-also"><span class="nav-number">5.</span> <span class="nav-text">T.also</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#T-let"><span class="nav-number">6.</span> <span class="nav-text">T.let</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#T-takeIf"><span class="nav-number">7.</span> <span class="nav-text">T.takeIf</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#T-takeUnless"><span class="nav-number">8.</span> <span class="nav-text">T.takeUnless</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#repeat"><span class="nav-number">9.</span> <span class="nav-text">repeat</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#方法的选择"><span class="nav-number">10.</span> <span class="nav-text">方法的选择</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ricky</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">54</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/ricky9090" title="GitHub &rarr; https://github.com/ricky9090" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ricky</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.7.1</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
